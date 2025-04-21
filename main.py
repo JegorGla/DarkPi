@@ -1,24 +1,37 @@
 import customtkinter as ctk
-from PIL import Image, ImageTk
-from bruteforce_ui import init_bruteforce_ui
-from settings_ui import init_settings_ui
-from theme_utils import apply_theme_colors
+from PIL import Image, ImageTk, ImageSequence
 import time
 
-# Создаем окно
+# Глобальные переменные
+time_label = None
+content_frame = None
+last_activity_time = time.time()  # Время последнего действия
+inactivity_timeout = 5  # Время в секундах до бездействия (например, 5 секунд)
+current_index = 0  # текущий слайд
+
+gif_label = None
+gif_frames = []
+gif_durations = []
+gif_animation_running = False
+gif_visible = False
+
+# Слайды
+slides = [
+    {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
+    {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
+    {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
+    {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"}
+]
+
+# Инициализация окна
 app = ctk.CTk()
 
-
-# Глобальная переменная для метки времени и основного контейнера
-time_label = None
-content_frame = None  # Контейнер для смены интерфейсов
-
-# Инициализация панели с временем
+# Функция инициализации панели времени
 def init_time_panel(parent_frame):
     global time_label
     if time_label is None:  # Создаем панель времени только один раз
-        time_label = ctk.CTkLabel(parent_frame, text="", font=("Arial", 16), fg_color="black", text_color="white")
-        time_label.place(relx=0.5, rely=0.05, anchor="center")  # Размещаем в верхней части экрана
+        time_label = ctk.CTkLabel(parent_frame, text="", font=("Arial", 16), fg_color="#252525", text_color="white")
+        time_label.place(relx=0.5, rely=0.05, anchor="center")
 
 # Обновление времени каждую секунду
 def update_time():
@@ -27,24 +40,98 @@ def update_time():
         time_label.configure(text=current_time)  # Обновляем метку времени
     app.after(1000, update_time)  # Обновляем время каждую секунду
 
-# Функция для очистки контента в content_frame
+# Функция для очистки контента
 def clear_content():
     for widget in content_frame.winfo_children():
         widget.destroy()
 
-def show_main_ui():
-    clear_content()  # Очищаем только содержимое content_frame
-    init_main_ui(content_frame)
+# Функция для загрузки слайда
+def load_slide(index):
+    global current_index
+    current_index = index % len(slides)
+    slide = slides[current_index]
+    img = Image.open(slide["image"])
+    img = img.resize((400, 300), Image.Resampling.LANCZOS)
+    photo = ImageTk.PhotoImage(img)
+    image_button.configure(image=photo, text="", width=400, height=300)
+    image_button.image = photo  # Важно сохранить ссылку!
+    label_text.configure(text=slide["text"])
 
-def show_settings_ui():
-    clear_content()  # Очищаем только содержимое content_frame
-    init_settings_ui(content_frame, show_main_ui)
+# Функции перехода между слайдами
+def next_slide():
+    load_slide(current_index + 1)
 
-# Инициализация основного интерфейса
+def prev_slide():
+    load_slide(current_index - 1)
+
+# Сброс таймера активности
+def reset_inactivity_timer(event=None):
+    global last_activity_time
+    last_activity_time = time.time()  # Сброс таймера
+    #print(last_activity_time)  # Для отладки
+    hide_gif_animation()  # Останавливаем отображение GIF при активности
+
+# Проверка на бездействие
+def check_inactivity():
+    if time.time() - last_activity_time > inactivity_timeout:
+        show_gif_animation()  # Показываем анимацию GIF при бездействии
+    else:
+        hide_gif_animation()  # Скрываем GIF при активности
+
+    app.after(1000, check_inactivity)  # Проверка каждую секунду
+
+# Функция для показа GIF анимации
+def show_gif_animation():
+    global gif_label, gif_frames, gif_durations, gif_animation_running, gif_visible
+
+    if gif_visible:
+        return  # уже отображается — ничего не делаем
+
+    gif_visible = True  # начинаем показывать
+
+    if gif_label is None:
+        gif_label = ctk.CTkLabel(app, text="", fg_color="transparent")
+        gif_label.place(relx=0.5, rely=0.5, anchor="center", relwidth=1, relheight=1)
+    else:
+        gif_label.place(relx=0.5, rely=0.5, anchor="center", relwidth=1, relheight=1)
+
+    if not gif_frames:
+        gif = Image.open("images/EvilEye.gif")
+        for frame in ImageSequence.Iterator(gif):
+            resized = frame.resize((app.winfo_width(), app.winfo_height()), Image.Resampling.LANCZOS)
+            gif_frames.append(ImageTk.PhotoImage(resized))
+            gif_durations.append(frame.info.get('duration', 100))
+
+    if not gif_animation_running:
+        gif_animation_running = True
+
+        def update_gif(index=0):
+            if not gif_visible:
+                return  # остановим цикл, если гиф скрыта
+            gif_label.configure(image=gif_frames[index])
+            gif_label.image = gif_frames[index]
+            next_index = (index + 1) % len(gif_frames)
+            app.after(gif_durations[index], update_gif, next_index)
+
+        update_gif()
+
+
+def hide_gif_animation():
+    global gif_visible, gif_animation_running
+
+    if gif_visible:
+        gif_visible = False
+        gif_animation_running = False  # остановим цикл анимации
+
+        if gif_label is not None:
+            gif_label.place_forget()  # скрываем, но не уничтожаем
+
+
+# Инициализация интерфейса
 def init_main_ui(parent_frame):
     global image_button, label_text, prev_button, next_button
     
-    # Центр: кнопка с картинкой
+    # Кнопка с картинкой
     image_button = ctk.CTkButton(parent_frame, text="", command=on_image_click, width=400, height=300, fg_color="#000000", hover_color="#000000")
     image_button.place(relx=0.5, rely=0.4, anchor="center")
 
@@ -63,7 +150,7 @@ def init_main_ui(parent_frame):
     # Загрузить первый слайд
     load_slide(current_index)
 
-# Создаем контейнер для панели с временем и контента
+# Инициализация основного интерфейса
 def init_app_layout():
     global content_frame
     # Панель с временем
@@ -73,42 +160,9 @@ def init_app_layout():
     content_frame = ctk.CTkFrame(app, fg_color="#000000")
     content_frame.place(relx=0.5, rely=0.55, anchor="center", relwidth=1, relheight=0.9)
 
-# Слайды: список словарей с путями к изображениям и подписями
-slides = [
-    {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
-    {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
-    {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
-    {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
-    {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
-]
-
-current_index = 0  # текущий слайд
-
-# ===== ФУНКЦИИ =====
-
-def load_slide(index):
-    global current_index
-    current_index = index % len(slides)
-
-    slide = slides[current_index]
-    img = Image.open(slide["image"])
-    img = img.resize((400, 300), Image.Resampling.LANCZOS)
-    photo = ImageTk.PhotoImage(img)
-
-    image_button.configure(image=photo, text="", width=400, height=300)
-    image_button.image = photo  # важно сохранить ссылку!
-    label_text.configure(text=slide["text"])
-
-def next_slide():
-    load_slide(current_index + 1)
-
-def prev_slide():
-    load_slide(current_index - 1)
-
+# Действия для слайдов
 def on_image_click():
-    # Действие в зависимости от текущего слайда
     action = slides[current_index]["action"]
-    
     if action == "ddos_action":
         ddos_action()
     elif action == "wifi_action":
@@ -117,8 +171,6 @@ def on_image_click():
         bruteforce_action()
     elif action == "phishing_action":
         phishing_action()
-    elif action == "settings_action":
-        show_settings_ui()
 
 def ddos_action():
     print("Запуск атаки DDOS!")
@@ -128,7 +180,6 @@ def wifi_action():
 
 def bruteforce_action():
     print("Запуск Bruteforce атаки!")
-    init_bruteforce_ui(app, show_main_ui)  # Переход на интерфейс Bruteforce
 
 def phishing_action():
     print("Запуск фишинговой атаки!")
@@ -136,17 +187,17 @@ def phishing_action():
 # Инициализация приложения
 init_app_layout()
 update_time()  # Запуск обновления времени
-show_main_ui()  # Отображение главного интерфейса
-apply_theme_colors(app)  # Или content_frame, если хочешь локально
+check_inactivity()  # Запуск проверки бездействия
+init_main_ui(content_frame)  # Отображение главного интерфейса
 
-# ========== APP configuration ==========
-if ctk.get_appearance_mode() == "Dark":
-    app.configure(fg_color="#000000")
-else:
-    app.configure(fg_color="#FFFFFF")
-    
+# ========== Настройки приложения ==========
+ctk.set_appearance_mode("Dark")  # Темная тема
 app.title("Слайдер")
 app.geometry("800x480")
+
+app.bind_all("<Button>", reset_inactivity_timer)   # любое нажатие мыши
+app.bind_all("<Key>", reset_inactivity_timer)      # любое нажатие клавиши
+app.bind_all("<Motion>", reset_inactivity_timer)  # любое движение мыши
 
 # Запуск приложения
 app.mainloop()

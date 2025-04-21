@@ -19,23 +19,6 @@ def init_settings_ui(parent_frame, go_back_callback):
     title = ctk.CTkLabel(parent_frame, text="Настройки", font=("Arial", 24))
     title.place(relx=0.5, rely=0.1, anchor="center")
 
-    # Переключатель темы (CheckBox)
-    def on_theme_toggle():
-        toggle_theme()
-        apply_theme_colors(parent_frame)  # <--- Обновляем цвета после смены темы
-    theme_checkbox = ctk.CTkCheckBox(
-        parent_frame,
-        text="Тёмная тема",
-        command=on_theme_toggle
-    )
-    # Устанавливаем изначальное состояние чекбокса в зависимости от текущей темы
-    if ctk.get_appearance_mode() == "Dark":
-        theme_checkbox.select()
-    else:
-        theme_checkbox.deselect()
-
-    theme_checkbox.place(relx=0.5, rely=0.3, anchor="center")
-
     # Кнопка "Сохранить настройки"
     save_btn = ctk.CTkButton(parent_frame, text="Сохранить настройки", command=lambda: print("Настройки сохранены"))
     save_btn.place(relx=0.5, rely=0.4, anchor="center")

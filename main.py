@@ -1,5 +1,8 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk, ImageSequence
+from wifi_ui import create_wifi_ui
+from bruteforce_ui import init_bruteforce_ui
+from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 import time
 
 # Глобальные переменные
@@ -20,7 +23,8 @@ slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
-    {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"}
+    {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
+    {"image": "images/Games.png", "text": "Games", "action": "games_action"}
 ]
 
 # Инициализация окна
@@ -129,6 +133,7 @@ def hide_gif_animation():
 
 # Инициализация интерфейса
 def init_main_ui(parent_frame):
+    clear_content()  # очищаем перед загрузкой UI
     global image_button, label_text, prev_button, next_button
     
     # Кнопка с картинкой
@@ -166,12 +171,13 @@ def on_image_click():
     if action == "ddos_action":
         ddos_action()
     elif action == "wifi_action":
-        wifi_action()
+        create_wifi_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
     elif action == "bruteforce_action":
         bruteforce_action()
     elif action == "phishing_action":
         phishing_action()
-
+    elif action == "games_action":
+        init_game_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
 def ddos_action():
     print("Запуск атаки DDOS!")
 
@@ -179,8 +185,7 @@ def wifi_action():
     print("Подключение к Wifi!")
 
 def bruteforce_action():
-    print("Запуск Bruteforce атаки!")
-
+    init_bruteforce_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
 def phishing_action():
     print("Запуск фишинговой атаки!")
 

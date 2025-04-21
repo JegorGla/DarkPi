@@ -1,5 +1,4 @@
 import customtkinter as ctk
-from theme_utils import apply_theme_colors
 
 def clear_frame(frame):
     for widget in frame.winfo_children():

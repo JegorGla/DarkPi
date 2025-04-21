@@ -2,10 +2,12 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 from bruteforce_ui import init_bruteforce_ui
 from settings_ui import init_settings_ui
+from theme_utils import apply_theme_colors
 import time
 
 # Создаем окно
 app = ctk.CTk()
+
 
 # Глобальная переменная для метки времени и основного контейнера
 time_label = None
@@ -135,9 +137,14 @@ def phishing_action():
 init_app_layout()
 update_time()  # Запуск обновления времени
 show_main_ui()  # Отображение главного интерфейса
+apply_theme_colors(app)  # Или content_frame, если хочешь локально
 
 # ========== APP configuration ==========
-app.configure(fg_color="#000000")  # Цвет фона приложения
+if ctk.get_appearance_mode() == "Dark":
+    app.configure(fg_color="#000000")
+else:
+    app.configure(fg_color="#FFFFFF")
+    
 app.title("Слайдер")
 app.geometry("800x480")
 

@@ -2,6 +2,7 @@ import customtkinter as ctk
 import pywifi
 from pywifi import const
 import time
+from virtual_keyboard import VirtualKeyboard  # Импортируем виртуальную клавиатуру
 
 def clear_frame(frame):
     """Очищает все виджеты в указанном фрейме."""
@@ -21,6 +22,30 @@ def scan_wifi_networks():
         networks.append(network.ssid)  # Добавляем SSID сети в список
     return networks
 
+def connect_to_wifi(ssid, password):
+    """Подключается к Wi-Fi сети с указанным SSID и паролем."""
+    wifi = pywifi.PyWiFi()
+    iface = wifi.interfaces()[0]
+    iface.disconnect()  # Отключаемся от текущей сети
+    time.sleep(1)  # Ждем перед подключением
+
+    profile = pywifi.Profile()  # Создаем профиль для подключения
+    profile.ssid = ssid  # Устанавливаем SSID
+    profile.auth = const.AUTH_ALG_OPEN  # Алгоритм аутентификации
+    profile.akm.append(const.AKM_TYPE_WPA2PSK)  # Тип шифрования
+    profile.cipher = const.CIPHER_TYPE_CCMP  # Тип шифрования данных
+    profile.key = password  # Устанавливаем пароль
+
+    iface.remove_all_network_profiles()  # Удаляем все существующие профили
+    tmp_profile = iface.add_network_profile(profile)  # Добавляем новый профиль
+    iface.connect(tmp_profile)  # Подключаемся к сети
+    time.sleep(5)  # Ждем подключения
+
+    if iface.status() == const.IFACE_CONNECTED:
+        return True
+    else:
+        return False
+
 def create_wifi_ui(parent_frame, go_back_callback):
     clear_frame(parent_frame)  # очищаем перед загрузкой UI
 
@@ -32,8 +57,36 @@ def create_wifi_ui(parent_frame, go_back_callback):
     networks_frame = ctk.CTkFrame(parent_frame)
     networks_frame.pack(pady=10)
 
-    def connect_to_network(ssid):
-        print(f"Попытка подключения к сети: {ssid}")
+    def on_password_submit(ssid, entry, keyboard_frame):
+        """Обрабатывает ввод пароля и подключается к сети."""
+        password = entry.get()
+        clear_frame(keyboard_frame)  # Очищаем клавиатуру после ввода
+        success = connect_to_wifi(ssid, password)
+        if success:
+            label_status = ctk.CTkLabel(parent_frame, text=f"Успешно подключено к {ssid}!", font=("Arial", 14))
+        else:
+            label_status = ctk.CTkLabel(parent_frame, text=f"Не удалось подключиться к {ssid}.", font=("Arial", 14))
+        label_status.pack(pady=10)
+
+    def on_network_click(ssid):
+        """Отображает поле ввода пароля и виртуальную клавиатуру."""
+        clear_frame(parent_frame)  # Очищаем текущий интерфейс
+
+        # Заголовок
+        label_title = ctk.CTkLabel(parent_frame, text=f"Подключение к {ssid}", font=("Arial", 20))
+        label_title.pack(pady=10)
+
+        # Поле ввода пароля
+        entry = ctk.CTkEntry(parent_frame, font=("Arial", 14), show="*")
+        entry.pack(pady=10)
+        entry.focus()
+
+        # Фрейм для виртуальной клавиатуры
+        keyboard_frame = ctk.CTkFrame(parent_frame)
+        keyboard_frame.pack(pady=10)
+
+        # Инициализация виртуальной клавиатуры
+        VirtualKeyboard(keyboard_frame, entry, lambda: on_password_submit(ssid, entry, keyboard_frame))
 
     def on_scan_button_click():
         for widget in networks_frame.winfo_children():
@@ -42,7 +95,7 @@ def create_wifi_ui(parent_frame, go_back_callback):
         networks = scan_wifi_networks()
         if networks:
             for network in networks:
-                connect_button = ctk.CTkButton(networks_frame, text=network, command=lambda ssid=network: connect_to_network(ssid))
+                connect_button = ctk.CTkButton(networks_frame, text=network, command=lambda ssid=network: on_network_click(ssid))
                 connect_button.pack(pady=5)
         else:
             no_network_label = ctk.CTkLabel(networks_frame, text="Нет доступных сетей.", font=("Arial", 14))

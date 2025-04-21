@@ -1,18 +1,40 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from bruteforce_ui import init_bruteforce_ui
+from settings_ui import init_settings_ui
+import time
+
+# Создаем окно
+app = ctk.CTk()
+
+# Глобальная переменная для метки времени
+time_label = None
+
+def timelabel(parent_frame):
+    global time_label
+    # Создаем метку для отображения времени
+    time_label = ctk.CTkLabel(parent_frame, text="", font=("Arial", 16), fg_color="black", text_color="white")
+    time_label.place(relx=0.5, rely=0.05, anchor="center")
 
 # Слайды: список словарей с путями к изображениям и подписями
 slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
-    {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"}
+    {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
+    {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
 ]
 
 current_index = 0  # текущий слайд
 
 # ===== ФУНКЦИИ =====
+
+def update_time():
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")  # Форматируем дату и время
+    if time_label:  # Проверяем, что метка времени была инициализирована
+        time_label.configure(text=current_time)  # Обновляем метку времени
+    app.after(1000, update_time)  # Обновляем время каждую секунду
+
 def load_slide(index):
     global current_index
     current_index = index % len(slides)
@@ -44,6 +66,11 @@ def on_image_click():
         bruteforce_action()
     elif action == "phishing_action":
         phishing_action()
+    elif action == "settings_action":
+        show_settings_ui()
+
+def show_settings_ui():
+    init_settings_ui(app, show_main_ui)  # Переход на интерфейс настроек
 
 def ddos_action():
     print("Запуск атаки DDOS!")
@@ -68,6 +95,9 @@ def show_main_ui():
 
 def init_main_ui(parent_frame):
     global image_button, label_text, prev_button, next_button
+    
+    # Инициализация метки времени
+    timelabel(parent_frame)
 
     # Центр: кнопка с картинкой
     image_button = ctk.CTkButton(parent_frame, text="", command=on_image_click, width=400, height=300, fg_color="#000000", hover_color="#000000")
@@ -88,10 +118,7 @@ def init_main_ui(parent_frame):
     # Загрузить первый слайд
     load_slide(current_index)
 
-# ===== UI ЭЛЕМЕНТЫ =====
-
-# Создаем окно
-app = ctk.CTk()
+update_time()  # Запуск обновления времени
 
 # Инициализация основного интерфейса
 init_main_ui(app)

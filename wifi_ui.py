@@ -81,28 +81,42 @@ def create_wifi_ui(parent_frame, go_back_callback):
         entry.pack(pady=10)
         entry.focus()
 
-        # Фрейм для виртуальной клавиатуры
-        keyboard_frame = ctk.CTkFrame(parent_frame)
-        keyboard_frame.pack(pady=10)
+        connect_button = ctk.CTkButton(parent_frame, text="Подключиться", command=lambda: on_password_submit(ssid, entry, keyboard_frame))
+        connect_button.pack(pady=10)
+
+        # # Фрейм для виртуальной клавиатуры
+        keyboard_frame = ctk.CTkFrame(parent_frame, width=300, height=100)  # Устанавливаем размеры при создании
+        keyboard_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.8)  # Располагаем в центре
+
+        back_button = ctk.CTkButton(parent_frame, text="← Назад", command=lambda: create_wifi_ui(parent_frame, go_back_callback))
+        back_button.place(relx=0.05, rely=0.05, anchor="nw")  # 5% от ширины и 5% от высоты, якорь в левом верхнем углу
 
         # Инициализация виртуальной клавиатуры
-        VirtualKeyboard(keyboard_frame, entry, lambda: on_password_submit(ssid, entry, keyboard_frame))
+        # VirtualKeyboard(keyboard_frame, entry, lambda: on_password_submit(ssid, entry, keyboard_frame))
 
     def on_scan_button_click():
+        """Обрабатывает нажатие на кнопку 'Сканировать сети'"""
+        # Очищаем фрейм с кнопками сетей перед сканированием
         for widget in networks_frame.winfo_children():
             widget.destroy()
 
+        # Сканируем доступные сети
         networks = scan_wifi_networks()
+        
         if networks:
+            # Создаем кнопку для каждой доступной сети
             for network in networks:
                 connect_button = ctk.CTkButton(networks_frame, text=network, command=lambda ssid=network: on_network_click(ssid))
                 connect_button.pack(pady=5)
         else:
+            # Если сетей нет, показываем сообщение
             no_network_label = ctk.CTkLabel(networks_frame, text="Нет доступных сетей.", font=("Arial", 14))
             no_network_label.pack(pady=10)
 
+    # Кнопка для сканирования сетей
     scan_button = ctk.CTkButton(parent_frame, text="Сканировать сети", command=on_scan_button_click)
     scan_button.pack(pady=10)
 
+    # Кнопка "Назад"
     back_button = ctk.CTkButton(parent_frame, text="← Назад", command=go_back_callback)
     back_button.pack(pady=10)

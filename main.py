@@ -4,10 +4,12 @@ from wifi_ui import create_wifi_ui
 from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 import time
+import pywifi
 
 # Глобальные переменные
 time_label = None
 content_frame = None
+wifi_znak_label = None
 last_activity_time = time.time()  # Время последнего действия
 inactivity_timeout = 5  # Время в секундах до бездействия (например, 5 секунд)
 current_index = 0  # текущий слайд
@@ -40,12 +42,57 @@ def init_time_panel(parent_frame):
         time_label = ctk.CTkLabel(parent_frame, text="", font=("Arial", 16), fg_color="#252525", text_color="white")
         time_label.place(relx=0.5, rely=0.05, anchor="center")
 
+def init_wifi_znak_with_texture(parent_frame):
+    global wifi_znak_label
+    if wifi_znak_label is None:  # Создаем панель только один раз
+        # Загружаем изображение для текстуры
+        texture_image = Image.open("images/WifiDisconnected.png")  # Изображение для не подключенного состояния
+        texture_image = texture_image.resize((50, 50))  # Измените размер изображения по необходимости
+        texture_photo = ImageTk.PhotoImage(texture_image)
+
+        # Создаем метку с фоновым изображением
+        wifi_znak_label = ctk.CTkLabel(parent_frame, image=texture_photo, text="", font=("Arial", 16), fg_color="#252525", text_color="white")
+        wifi_znak_label.image = texture_photo  # Сохраняем ссылку на изображение, чтобы оно не удалялось сборщиком мусора
+
+        # Размещаем в правом верхнем углу
+        wifi_znak_label.place(relx=0.95, rely=0.01, anchor="ne")  # Размещение в правом верхнем углу
+
+        # Проверяем состояние подключения и обновляем изображение
+        update_wifi_icon()
+
+def update_wifi_icon():
+    """Обновляет иконку в зависимости от состояния подключения к Wi-Fi."""
+    if is_wifi_connected():
+        # Если Wi-Fi подключен, загружаем изображение для подключенного состояния
+        texture_image = Image.open("images/WifiConnected.png")
+    else:
+        # Если Wi-Fi не подключен, загружаем изображение для отключенного состояния
+        texture_image = Image.open("images/WifiDisconnected.png")
+    
+    # Меняем размер изображения
+    texture_image = texture_image.resize((50, 50))
+    texture_photo = ImageTk.PhotoImage(texture_image)
+
+    # Обновляем метку
+    wifi_znak_label.configure(image=texture_photo)
+    wifi_znak_label.image = texture_photo  # Сохраняем ссылку на изображение, чтобы оно не удалялось сборщиком мусора
+
 # Обновление времени каждую секунду
 def update_time():
     current_time = time.strftime("%Y-%m-%d %H:%M:%S")  # Форматируем дату и время
     if time_label:  # Проверяем, что метка времени была инициализирована
         time_label.configure(text=current_time)  # Обновляем метку времени
     app.after(1000, update_time)  # Обновляем время каждую секунду
+
+def is_wifi_connected():
+    wifi = pywifi.PyWiFi()
+    iface = wifi.interfaces()[0]  # Получаем первый доступный интерфейс
+    return iface.status() == pywifi.const.IFACE_CONNECTED
+
+def check_and_update_wifi_status():
+    """Периодическая проверка состояния Wi-Fi и обновление иконки."""
+    update_wifi_icon()  # Обновляем иконку в зависимости от состояния подключения к Wi-Fi
+    app.after(1000, check_and_update_wifi_status)  # Проверка каждую секунду (1000 мс)
 
 # Функция для очистки контента
 def clear_content():
@@ -219,6 +266,7 @@ def init_main_ui(parent_frame):
 
     # Загрузить первый слайд
     load_slide(current_index)
+    check_and_update_wifi_status()  # Важно вызвать это здесь, чтобы началась периодическая проверка
 
 # Инициализация основного интерфейса
 def init_app_layout():
@@ -255,10 +303,12 @@ def phishing_action():
     print("Запуск фишинговой атаки!")
 
 # Инициализация приложения
+init_wifi_znak_with_texture(content_frame)
 init_app_layout()
 update_time()  # Запуск обновления времени
 check_inactivity()  # Запуск проверки бездействия
 init_main_ui(content_frame)  # Отображение главного интерфейса
+
 
 # ========== Настройки приложения ==========
 ctk.set_appearance_mode("Dark")  # Темная тема

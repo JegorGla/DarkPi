@@ -3,6 +3,7 @@ from PIL import Image, ImageTk, ImageSequence
 from wifi_ui import create_wifi_ui
 from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
+from greeting import show_greeting  # Импортируем функцию показа приветствия
 import time
 import pywifi
 
@@ -307,8 +308,9 @@ init_wifi_znak_with_texture(content_frame)
 init_app_layout()
 update_time()  # Запуск обновления времени
 check_inactivity()  # Запуск проверки бездействия
-init_main_ui(content_frame)  # Отображение главного интерфейса
+#init_main_ui(content_frame)  # Отображение главного интерфейса
 
+show_greeting(app, callback=lambda: init_main_ui(content_frame), delay_ms=3000)
 
 # ========== Настройки приложения ==========
 ctk.set_appearance_mode("Dark")  # Темная тема

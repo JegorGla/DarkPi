@@ -73,26 +73,43 @@ def load_slide(index, animate=False, direction="left"):
 def animate_slide(new_photo, new_text, direction):
     steps = 15
     delay = 10  # мс
-    total_shift = 1.2  # относительное смещение (1 = ширина окна)
+    total_shift = 0.5  # относительное смещение (1 = ширина окна)
 
     if direction == "left":
         sign = -1
     else:
         sign = 1
 
+    # Создаем временный лейбл для нового текста
+    temp_label = ctk.CTkLabel(content_frame, text=new_text, font=("Arial", 20))
+    temp_label.place(relx=0.5 - sign * total_shift, rely=0.75, anchor="center")
+
     def slide_out(step=0):
         progress = step / steps
         offset = sign * progress * total_shift
+
+        # Двигаем кнопку с изображением
         image_button.place_configure(relx=0.5 + offset)
+
+        # Двигаем текущий текст
+        label_text.place_configure(relx=0.5 + offset)
+
+        # Двигаем новый текст синхронно, но с противоположной стороны
+        temp_label.place_configure(relx=0.5 - sign * (1 - progress) * total_shift)
 
         if step < steps:
             app.after(delay, slide_out, step + 1)
         else:
-            # Смена изображения — пока кнопка вне экрана
+            # Финальное состояние
             image_button.configure(image=new_photo)
             image_button.image = new_photo
+
+            # Удаляем старый лейбл, заменяем на новый
             label_text.configure(text=new_text)
-            # Сдвигаем её с другой стороны
+            label_text.place_configure(relx=0.5)
+            temp_label.destroy()
+
+            # Подготовка кнопки к финальной анимации
             image_button.place_configure(relx=0.5 - sign * total_shift)
             slide_in()
 

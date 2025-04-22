@@ -1,38 +1,38 @@
 import customtkinter as ctk
 import os
 
-def show_greeting(parent_frame, callback=None, delay_ms=3000):
-    """Показывает приветствие с анимацией и скрывает автоматически через delay_ms."""
+def show_greeting(parent_frame, callback=None):
+    """Показывает приветствие Welcome с fade-in и fade-out, затем вызывает callback."""
+
     greeting_frame = ctk.CTkFrame(parent_frame, fg_color="black")
     greeting_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     greeting_label = ctk.CTkLabel(
         greeting_frame,
-        text=f"Welcome to the DarkPi,\n{os.getlogin()}!",
+        text=f"Добро пожаловать в DarkPi,\n{os.getlogin()}!",
         font=("Arial", 24),
-        text_color="white"
+        text_color="#000000"
     )
     greeting_label.place(relx=0.5, rely=0.4, anchor="center")
 
-    # Fade-in
-    def fade_in_text(opacity=0):
-        if opacity <= 1:
-            hex_color = f"#{int(255 * opacity):02x}{int(255 * opacity):02x}{int(255 * opacity):02x}"
-            greeting_label.configure(text_color=hex_color)
-            parent_frame.after(50, fade_in_text, opacity + 0.05)
+    # Fade-функция
+    def fade(widget, start, end, step, delay, on_complete=None):
+        def _fade(opacity=start):
+            if (step > 0 and opacity <= end) or (step < 0 and opacity >= end):
+                val = int(255 * opacity)
+                color = f"#{val:02x}{val:02x}{val:02x}"
+                widget.configure(text_color=color)
+                parent_frame.after(delay, _fade, opacity + step)
+            else:
+                if on_complete:
+                    on_complete()
+        _fade()
 
-    # Fade-out
-    def fade_out_text(opacity=1):
-        if opacity >= 0:
-            hex_color = f"#{int(255 * opacity):02x}{int(255 * opacity):02x}{int(255 * opacity):02x}"
-            greeting_label.configure(text_color=hex_color)
-            parent_frame.after(50, fade_out_text, opacity - 0.05)
-        else:
-            greeting_frame.destroy()
-            if callback:
-                callback()
+    def finish():
+        greeting_frame.destroy()
+        if callback:
+            callback()
 
-    fade_in_text(0)
-
-    # Запуск fade-out после задержки
-    parent_frame.after(delay_ms, lambda: fade_out_text(1))
+    # Анимация: появление → задержка → исчезновение → callback
+    fade(greeting_label, start=0, end=1, step=0.05, delay=30, on_complete=lambda:
+        parent_frame.after(1500, lambda: fade(greeting_label, start=1, end=0, step=-0.05, delay=30, on_complete=finish)))

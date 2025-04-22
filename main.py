@@ -181,6 +181,37 @@ def prev_slide():
     load_slide(current_index - 1, animate=True, direction="right")
 
 
+def show_loading(callback=None):
+    loading_label = ctk.CTkLabel(
+        app,
+        text="Loading...",
+        font=("Arial", 20),
+        text_color="#000000",
+        fg_color="black"
+    )
+    loading_label.place(relx=0.5, rely=0.5, anchor="center")
+
+    def fade(widget, start, end, step, delay, on_complete=None):
+        def _fade(opacity=start):
+            if (step > 0 and opacity <= end) or (step < 0 and opacity >= end):
+                val = int(255 * opacity)
+                color = f"#{val:02x}{val:02x}{val:02x}"
+                widget.configure(text_color=color)
+                app.after(delay, _fade, opacity + step)
+            else:
+                if on_complete:
+                    on_complete()
+        _fade()
+
+    def done():
+        loading_label.destroy()
+        if callback:
+            callback()
+
+    # Плавный вход и выход
+    fade(loading_label, 0, 1, 0.05, 30, on_complete=lambda:
+        app.after(1500, lambda: fade(loading_label, 1, 0, -0.05, 30, on_complete=done)))
+
 # Сброс таймера активности
 def reset_inactivity_timer(event=None):
     global last_activity_time
@@ -242,7 +273,6 @@ def hide_gif_animation():
 
         if gif_label is not None:
             gif_label.place_forget()  # скрываем, но не уничтожаем
-
 
 # Инициализация интерфейса
 def init_main_ui(parent_frame):
@@ -310,7 +340,8 @@ update_time()  # Запуск обновления времени
 check_inactivity()  # Запуск проверки бездействия
 #init_main_ui(content_frame)  # Отображение главного интерфейса
 
-show_greeting(app, callback=lambda: init_main_ui(content_frame), delay_ms=3000)
+show_greeting(app, callback=lambda: show_loading(callback=lambda: init_main_ui(content_frame)))
+
 
 # ========== Настройки приложения ==========
 ctk.set_appearance_mode("Dark")  # Темная тема
@@ -320,6 +351,8 @@ app.geometry("800x480")
 app.bind_all("<Button>", reset_inactivity_timer)   # любое нажатие мыши
 app.bind_all("<Key>", reset_inactivity_timer)      # любое нажатие клавиши
 app.bind_all("<Motion>", reset_inactivity_timer)  # любое движение мыши
+
+# fade_out_label(animation_label, 1)  # Скрываем анимацию при запуске приложения
 
 # Запуск приложения
 app.mainloop()

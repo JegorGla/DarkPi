@@ -18,6 +18,9 @@ gif_durations = []
 gif_animation_running = False
 gif_visible = False
 
+image_button_current = None
+image_button_next = None
+
 # Слайды
 slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
@@ -50,23 +53,68 @@ def clear_content():
         widget.destroy()
 
 # Функция для загрузки слайда
-def load_slide(index):
+def load_slide(index, animate=False, direction="left"):
     global current_index
     current_index = index % len(slides)
     slide = slides[current_index]
+
     img = Image.open(slide["image"])
     img = img.resize((400, 300), Image.Resampling.LANCZOS)
     photo = ImageTk.PhotoImage(img)
-    image_button.configure(image=photo, text="", width=400, height=300)
-    image_button.image = photo  # Важно сохранить ссылку!
-    label_text.configure(text=slide["text"])
+
+    if animate:
+        animate_slide(photo, slide["text"], direction)
+    else:
+        image_button.configure(image=photo, text="", width=400, height=300)
+        image_button.image = photo
+        label_text.configure(text=slide["text"])
+
+
+def animate_slide(new_photo, new_text, direction):
+    steps = 15
+    delay = 10  # мс
+    total_shift = 1.2  # относительное смещение (1 = ширина окна)
+
+    if direction == "left":
+        sign = -1
+    else:
+        sign = 1
+
+    def slide_out(step=0):
+        progress = step / steps
+        offset = sign * progress * total_shift
+        image_button.place_configure(relx=0.5 + offset)
+
+        if step < steps:
+            app.after(delay, slide_out, step + 1)
+        else:
+            # Смена изображения — пока кнопка вне экрана
+            image_button.configure(image=new_photo)
+            image_button.image = new_photo
+            label_text.configure(text=new_text)
+            # Сдвигаем её с другой стороны
+            image_button.place_configure(relx=0.5 - sign * total_shift)
+            slide_in()
+
+    def slide_in(step=0):
+        progress = step / steps
+        offset = -sign * (1 - progress) * total_shift
+        image_button.place_configure(relx=0.5 + offset)
+
+        if step < steps:
+            app.after(delay, slide_in, step + 1)
+        else:
+            image_button.place_configure(relx=0.5)
+
+    slide_out()
 
 # Функции перехода между слайдами
 def next_slide():
-    load_slide(current_index + 1)
+    load_slide(current_index + 1, animate=True, direction="left")
 
 def prev_slide():
-    load_slide(current_index - 1)
+    load_slide(current_index - 1, animate=True, direction="right")
+
 
 # Сброс таймера активности
 def reset_inactivity_timer(event=None):

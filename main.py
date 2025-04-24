@@ -4,6 +4,7 @@ from wifi_ui import create_wifi_ui
 from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 from greeting import show_greeting  # Импортируем функцию показа приветствия
+from DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
 import time
 import pywifi
 
@@ -11,6 +12,7 @@ import pywifi
 time_label = None
 content_frame = None
 wifi_znak_label = None
+alowed_gif_animation = True  # Разрешаем анимацию GIF
 swipe_enabled = True
 last_activity_time = time.time()  # Время последнего действия
 inactivity_timeout = 5  # Время в секундах до бездействия (например, 5 секунд)
@@ -39,6 +41,13 @@ slides = [
 
 # Инициализация окна
 app = ctk.CTk()
+
+def dvd_button():
+    global alowed_gif_animation
+    alowed_gif_animation = False  # Отключаем анимацию GIF
+    dvd_button = ctk.CTkButton(app, text="DVD", font=("Arial", 20), command=lambda: create_dvd_ui(content_frame))
+    dvd_button.place(relx=0, rely=0, x=10, y=10, anchor="nw")  # Размещаем в левом верхнем углу
+
 
 # Функция инициализации панели времени
 def init_time_panel(parent_frame):
@@ -100,10 +109,10 @@ def show_connected_network():
         with open("variables.txt", "r", encoding="utf-8") as file:
             ssid = file.read().strip()
             if ssid:
-                wifi_znak_label.configure(text=f"Подключено к сети: {ssid}")
+                wifi_znak_label.configure(text=f"{ssid}")
                 app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Скрываем текст через 2 секунды
             else:
-                wifi_znak_label.configure(text="Нет подключенной сети.")
+                wifi_znak_label.configure(text="No connected")
     except FileNotFoundError:
         wifi_znak_label.configure(text="Файл с данными сети не найден.")
 
@@ -436,13 +445,13 @@ app.bind("<ButtonRelease-1>", on_swipe_end)  # Конец свайпа
 
 # Инициализация приложения
 init_wifi_znak_with_texture(content_frame)
+dvd_button()  # Кнопка DVD
 init_app_layout()
 update_time()  # Запуск обновления времени
 check_inactivity()  # Запуск проверки бездействия
 #init_main_ui(content_frame)  # Отображение главного интерфейса
 
 show_greeting(app, callback=lambda: show_loading(callback=lambda: init_main_ui(content_frame)))
-
 
 # ========== Настройки приложения ==========
 ctk.set_appearance_mode("Dark")  # Темная тема

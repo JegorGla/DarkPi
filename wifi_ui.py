@@ -64,6 +64,8 @@ def create_wifi_ui(parent_frame, go_back_callback):
         success = connect_to_wifi(ssid, password)
         if success:
             label_status = ctk.CTkLabel(parent_frame, text=f"Успешно подключено к {ssid}!", font=("Arial", 14))
+            with open("variables.txt", "w") as file:
+                file.write(ssid)
         else:
             label_status = ctk.CTkLabel(parent_frame, text=f"Не удалось подключиться к {ssid}.", font=("Arial", 14))
         label_status.pack(pady=10)

@@ -11,6 +11,7 @@ import pywifi
 time_label = None
 content_frame = None
 wifi_znak_label = None
+swipe_enabled = True
 last_activity_time = time.time()  # Время последнего действия
 inactivity_timeout = 5  # Время в секундах до бездействия (например, 5 секунд)
 current_index = 0  # текущий слайд
@@ -24,13 +25,16 @@ gif_visible = False
 image_button_current = None
 image_button_next = None
 
+start_x = 0  # Начальная позиция свайпа
+
 # Слайды
 slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
-    {"image": "images/Games.png", "text": "Games", "action": "games_action"}
+    {"image": "images/Games.png", "text": "Games", "action": "games_action"},
+    {"image": "images/Settings.png", "text": "Bruteforce", "action": "settings_action"},
 ]
 
 # Инициализация окна
@@ -52,7 +56,7 @@ def init_wifi_znak_with_texture(parent_frame):
         texture_photo = ImageTk.PhotoImage(texture_image)
 
         # Создаем метку с фоновым изображением
-        wifi_znak_label = ctk.CTkLabel(parent_frame, image=texture_photo, text="", font=("Arial", 16), fg_color="#252525", text_color="white")
+        wifi_znak_label = ctk.CTkButton(parent_frame, image=texture_photo, text="", font=("Arial", 16), fg_color="#252525", text_color="white", command=show_connected_network)
         wifi_znak_label.image = texture_photo  # Сохраняем ссылку на изображение, чтобы оно не удалялось сборщиком мусора
 
         # Размещаем в правом верхнем углу
@@ -89,6 +93,19 @@ def is_wifi_connected():
     wifi = pywifi.PyWiFi()
     iface = wifi.interfaces()[0]  # Получаем первый доступный интерфейс
     return iface.status() == pywifi.const.IFACE_CONNECTED
+
+def show_connected_network():
+    """Отображает название подключенной сети."""
+    try:
+        with open("variables.txt", "r", encoding="utf-8") as file:
+            ssid = file.read().strip()
+            if ssid:
+                wifi_znak_label.configure(text=f"Подключено к сети: {ssid}")
+                app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Скрываем текст через 2 секунды
+            else:
+                wifi_znak_label.configure(text="Нет подключенной сети.")
+    except FileNotFoundError:
+        wifi_znak_label.configure(text="Файл с данными сети не найден.")
 
 def check_and_update_wifi_status():
     """Периодическая проверка состояния Wi-Fi и обновление иконки."""
@@ -133,6 +150,9 @@ def animate_slide(new_photo, new_text, direction):
     temp_label.place(relx=0.5 - sign * total_shift, rely=0.75, anchor="center")
 
     def slide_out(step=0):
+        if not image_button or not image_button.winfo_exists():  # Проверяем, что виджет существует
+            return
+
         progress = step / steps
         offset = sign * progress * total_shift
 
@@ -311,6 +331,7 @@ def init_app_layout():
 
 # Действия для слайдов
 def on_image_click():
+    disable_swipe_temporarily(0.5)  # 🔒 Отключаем свайп на 2 секунды после нажатия
     action = slides[current_index]["action"]
     if action == "ddos_action":
         ddos_action()
@@ -332,6 +353,86 @@ def bruteforce_action():
     init_bruteforce_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
 def phishing_action():
     print("Запуск фишинговой атаки!")
+
+# События свайпа
+def on_swipe_start(event):
+    global start_x, swipe_enabled
+
+    if not swipe_enabled:
+        print("[SWIPE START] Свайп отключён — ничего не делаем.")
+        start_x = None
+        return
+    # Получаем корневое окно
+    root = event.widget._root()
+
+    # Получаем настоящий объект
+    try:
+        widget = root.nametowidget(str(event.widget))
+    except Exception as e:
+        print(f"[SWIPE START] Ошибка при получении виджета: {e}")
+        widget = event.widget
+
+    print(f"[SWIPE START] Widget: {widget}, Type: {type(widget)}")
+
+    # Проверяем, если свайп начался на кнопке или её потомке — отменяем
+    parent = widget
+    while parent:
+        if isinstance(parent, ctk.CTkButton):
+            print("[SWIPE START] Свайп отключён — начался на кнопке.")
+            start_x = None
+            return
+        try:
+            parent = parent.master
+        except AttributeError:
+            break
+
+    # Проверка — разрешён ли свайп только на определённом виджете
+    if not isinstance(widget, ctk.CTkCanvas):
+        print("[SWIPE START] Свайп запрещён — не на Canvas.")
+        start_x = None
+        return
+
+    # Всё ок — активируем свайп
+    start_x = event.x
+    print(f"[SWIPE START] Свайп активирован. start_x = {start_x}")
+
+
+def on_swipe_end(event):
+    global start_x
+
+    if start_x is None:
+        print("[SWIPE END] Свайп был отключён — ничего не делаем.")
+        return
+
+    end_x = event.x
+    delta = end_x - start_x
+    print(f"[SWIPE END] end_x = {end_x}, delta = {delta}")
+
+    if abs(delta) > 50:
+        if delta > 0:
+            print("[SWIPE] Свайп вправо")
+            prev_slide()
+        else:
+            print("[SWIPE] Свайп влево")
+            next_slide()
+    else:
+        print("[SWIPE] Слишком маленькое смещение — свайп проигнорирован.")
+
+def disable_swipe_temporarily(seconds=0.5):
+    global swipe_enabled
+    swipe_enabled = False
+    print(f"[SWIPE] Свайп временно отключён на {seconds} сек")
+    app.after(int(seconds * 1000), enable_swipe)
+
+def enable_swipe():
+    global swipe_enabled
+    swipe_enabled = True
+    print("[SWIPE] Свайп снова разрешён")
+
+
+# Привязка событий к окну
+app.bind("<ButtonPress-1>", on_swipe_start)  # Начало свайпа
+app.bind("<ButtonRelease-1>", on_swipe_end)  # Конец свайпа
 
 # Инициализация приложения
 init_wifi_znak_with_texture(content_frame)

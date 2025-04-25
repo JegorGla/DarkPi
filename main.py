@@ -1,19 +1,28 @@
+#=============================Импортируем библиотеки=============================
 import customtkinter as ctk
 from PIL import Image, ImageTk, ImageSequence
+#+++++++++++++++Import all UI+++++++++++++++
 from wifi_ui import create_wifi_ui
 from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 from greeting import show_greeting  # Импортируем функцию показа приветствия
 from DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
+from settings_ui import init_settings_ui  # Импортируем функцию создания настроек
+from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
 
-# Глобальные переменные
+#====================================================================
+
+
+#=============================Пременные=============================
 time_label = None
 content_frame = None
 wifi_znak_label = None
 alowed_gif_animation = True  # Разрешаем анимацию GIF
 swipe_enabled = True
+alowed_swipe = True  # Разрешаем свайп
 last_activity_time = time.time()  # Время последнего действия
 inactivity_timeout = 5  # Время в секундах до бездействия (например, 5 секунд)
 current_index = 0  # текущий слайд
@@ -28,8 +37,10 @@ image_button_current = None
 image_button_next = None
 
 start_x = 0  # Начальная позиция свайпа
+#===================================================================
 
-# Слайды
+
+#=============================Слайды=============================
 slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
@@ -358,6 +369,7 @@ def init_app_layout():
     content_frame.place(relx=0.5, rely=0.55, anchor="center", relwidth=1, relheight=0.9)
 
 # Действия для слайдов
+#=============================Главные действия=============================
 def on_image_click():
     disable_swipe_temporarily(0.5)  # 🔒 Отключаем свайп на 2 секунды после нажатия
     action = slides[current_index]["action"]
@@ -369,22 +381,51 @@ def on_image_click():
         bruteforce_action()
     elif action == "phishing_action":
         phishing_action()
+    elif action == "settings_action":
+        settings_action()
     elif action == "games_action":
         init_game_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
 def ddos_action():
-    print("Запуск атаки DDOS!")
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+
+    create_ddos_ui(content_frame, go_back_callback=go_back)
 
 def wifi_action():
     print("Подключение к Wifi!")
 
 def bruteforce_action():
     init_bruteforce_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+
 def phishing_action():
     print("Запуск фишинговой атаки!")
 
+def settings_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+
+    init_settings_ui(content_frame, go_back_callback=go_back)
+
+#===========================================================================
+
 # События свайпа
 def on_swipe_start(event):
-    global start_x, swipe_enabled
+    global start_x, swipe_enabled, alowed_swipe
+
+    if not alowed_swipe:
+        print("[SWIPE START] Свайп отключён — ничего не делаем.")
+        start_x = None
+        return
 
     if not swipe_enabled:
         print("[SWIPE START] Свайп отключён — ничего не делаем.")

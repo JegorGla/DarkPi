@@ -36,24 +36,40 @@ slides = [
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
-    {"image": "images/Settings.png", "text": "Bruteforce", "action": "settings_action"},
+    {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
 ]
 
 # Инициализация окна
 app = ctk.CTk()
 
 def dvd_button():
-    global alowed_gif_animation
-    alowed_gif_animation = False  # Отключаем анимацию GIF
-    dvd_button = ctk.CTkButton(app, text="DVD", font=("Arial", 20), command=lambda: create_dvd_ui(content_frame))
-    dvd_button.place(relx=0, rely=0, x=10, y=10, anchor="nw")  # Размещаем в левом верхнем углу
+    def on_dvd_click():
+        global alowed_gif_animation
+        alowed_gif_animation = False  # Отключаем анимацию GIF
 
+        # Переход в DVD UI с логикой свайпа-назад
+        create_dvd_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+
+    # Кнопка DVD
+    dvd_btn = ctk.CTkButton(app, text="DVD", font=("Arial", 20), command=on_dvd_click, hover_color="#272727", fg_color="#242424", text_color="white")
+    dvd_btn.place(relx=0, rely=0, x=10, y=10, anchor="nw")
+
+def exit_btn():
+    def exit_app():
+        app.quit()
+    
+    logout_img = Image.open("images/Logout.png")  # Загружаем изображение
+    logout_img = logout_img.resize((50, 50))  # Измените размер изображения по необходимости
+    logout_img = ImageTk.PhotoImage(logout_img)  # Преобразуем в PhotoImage
+
+    exit_button = ctk.CTkButton(app, text="", image=logout_img, font=("Arial", 20), command=exit_app, hover_color="#272727", fg_color="#242424", text_color="white", width=40, height=40)
+    exit_button.place(relx=1, rely=0.01, anchor="ne")  # Размещение в правом верхнем углу
 
 # Функция инициализации панели времени
 def init_time_panel(parent_frame):
     global time_label
     if time_label is None:  # Создаем панель времени только один раз
-        time_label = ctk.CTkLabel(parent_frame, text="", font=("Arial", 16), fg_color="#252525", text_color="white")
+        time_label = ctk.CTkLabel(parent_frame, text="", font=("Arial", 16), fg_color="#242424", text_color="white")
         time_label.place(relx=0.5, rely=0.05, anchor="center")
 
 def init_wifi_znak_with_texture(parent_frame):
@@ -65,11 +81,11 @@ def init_wifi_znak_with_texture(parent_frame):
         texture_photo = ImageTk.PhotoImage(texture_image)
 
         # Создаем метку с фоновым изображением
-        wifi_znak_label = ctk.CTkButton(parent_frame, image=texture_photo, text="", font=("Arial", 16), fg_color="#252525", text_color="white", command=show_connected_network)
+        wifi_znak_label = ctk.CTkButton(parent_frame, image=texture_photo, text="", font=("Arial", 16), fg_color="#242424", hover_color="#272727", text_color="white", width=50, height=50, command=show_connected_network)
         wifi_znak_label.image = texture_photo  # Сохраняем ссылку на изображение, чтобы оно не удалялось сборщиком мусора
 
         # Размещаем в правом верхнем углу
-        wifi_znak_label.place(relx=0.95, rely=0.01, anchor="ne")  # Размещение в правом верхнем углу
+        wifi_znak_label.place(relx=0.92, rely=0.01, anchor="ne")  # Размещение в правом верхнем углу
 
         # Проверяем состояние подключения и обновляем изображение
         update_wifi_icon()
@@ -261,6 +277,9 @@ def check_inactivity():
 def show_gif_animation():
     global gif_label, gif_frames, gif_durations, gif_animation_running, gif_visible
 
+    if not alowed_gif_animation:
+        return
+
     if gif_visible:
         return  # уже отображается — ничего не делаем
 
@@ -446,6 +465,7 @@ app.bind("<ButtonRelease-1>", on_swipe_end)  # Конец свайпа
 # Инициализация приложения
 init_wifi_znak_with_texture(content_frame)
 dvd_button()  # Кнопка DVD
+exit_btn()  # Кнопка выхода
 init_app_layout()
 update_time()  # Запуск обновления времени
 check_inactivity()  # Запуск проверки бездействия

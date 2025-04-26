@@ -2,7 +2,7 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk, ImageSequence
 #+++++++++++++++Import all UI+++++++++++++++
-from wifi_ui import create_wifi_ui
+from wifi_ui import create_main_wifi_ui
 from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 from greeting import show_greeting  # Импортируем функцию показа приветствия
@@ -39,7 +39,7 @@ image_button_next = None
 start_x = 0  # Начальная позиция свайпа
 #===================================================================
 
-logging.getLogger("pywifi").setLevel(logging.CRITICAL)  # Скрываем логи pywifi
+logging.getLogger("pywifi").setLevel(logging.CRITICAL)
 
 #=============================Слайды=============================
 slides = [
@@ -380,7 +380,7 @@ def on_image_click():
     if action == "ddos_action":
         ddos_action()
     elif action == "wifi_action":
-        create_wifi_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+        create_main_wifi_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
     elif action == "bruteforce_action":
         bruteforce_action()
     elif action == "phishing_action":

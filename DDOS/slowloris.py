@@ -3,7 +3,6 @@ import time
 import random
 import threading
 import argparse
-import customtkinter as ctk
 
 # Функция, поддерживающая одно соединение
 def slowloris_socket(target, port, interval):

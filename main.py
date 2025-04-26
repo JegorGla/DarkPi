@@ -12,7 +12,7 @@ from ddos_ui import create_ddos_ui  # Импортируем функцию со
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
-
+import logging
 #====================================================================
 
 
@@ -39,6 +39,7 @@ image_button_next = None
 start_x = 0  # Начальная позиция свайпа
 #===================================================================
 
+logging.getLogger("pywifi").setLevel(logging.CRITICAL)  # Скрываем логи pywifi
 
 #=============================Слайды=============================
 slides = [
@@ -126,9 +127,12 @@ def update_time():
     app.after(1000, update_time)  # Обновляем время каждую секунду
 
 def is_wifi_connected():
-    wifi = pywifi.PyWiFi()
-    iface = wifi.interfaces()[0]  # Получаем первый доступный интерфейс
-    return iface.status() == pywifi.const.IFACE_CONNECTED
+    try:
+        wifi = pywifi.PyWiFi()
+        iface = wifi.interfaces()[0]  # Получаем первый доступный интерфейс
+        return iface.status() == pywifi.const.IFACE_CONNECTED
+    except Exception as e:
+        pass
 
 def show_connected_network():
     """Отображает название подключенной сети."""

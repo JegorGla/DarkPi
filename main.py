@@ -2,13 +2,16 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk, ImageSequence
 #+++++++++++++++Import all UI+++++++++++++++
+from phishing_ui import create_main_phishing_ui
 from wifi_ui import create_main_wifi_ui
+from network_scan_ui import ns_ui  # Импортируем функцию создания интерфейса сканирования сети
 from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 from greeting import show_greeting  # Импортируем функцию показа приветствия
 from DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
 from settings_ui import init_settings_ui  # Импортируем функцию создания настроек
 from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
+from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
@@ -45,9 +48,11 @@ logging.getLogger("pywifi").setLevel(logging.CRITICAL)
 slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
+    {"image": "images/NetworkScan.png", "text": "Network Scan", "action": "network_scan_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
+    {"image": "images/Folder.png", "text": "See files", "action": "files_action"},
     {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
 ]
 
@@ -251,6 +256,28 @@ def show_loading(callback=None):
     )
     loading_label.place(relx=0.5, rely=0.5, anchor="center")
 
+    # Переменные для анимации точек
+    dot_position = 0  # Начальная позиция для точек
+    max_position = 10  # Максимальное смещение точек
+    dot_direction = 1  # Направление движения (1 - вверх, -1 - вниз)
+
+    def animate_dots():
+        nonlocal dot_position, dot_direction
+
+        # Смена позиции точек
+        dot_position += dot_direction
+
+        # Перевернуть направление, если мы достигли максимального смещения
+        if dot_position >= max_position or dot_position <= 0:
+            dot_direction *= -1
+
+        # Генерация текста с анимацией точек
+        dots = '.' * (dot_position % 4)
+        loading_label.configure(text=f"Loading{dots}")
+
+        # Повторить анимацию
+        app.after(200, animate_dots)
+
     def fade(widget, start, end, step, delay, on_complete=None):
         def _fade(opacity=start):
             if (step > 0 and opacity <= end) or (step < 0 and opacity >= end):
@@ -261,6 +288,7 @@ def show_loading(callback=None):
             else:
                 if on_complete:
                     on_complete()
+
         _fade()
 
     def done():
@@ -271,6 +299,9 @@ def show_loading(callback=None):
     # Плавный вход и выход
     fade(loading_label, 0, 1, 0.05, 30, on_complete=lambda:
         app.after(1500, lambda: fade(loading_label, 1, 0, -0.05, 30, on_complete=done)))
+
+    # Запуск анимации точек
+    animate_dots()
 
 # Сброс таймера активности
 def reset_inactivity_timer(event=None):
@@ -381,6 +412,8 @@ def on_image_click():
         ddos_action()
     elif action == "wifi_action":
         create_main_wifi_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+    elif action == "network_scan_action":
+        ns_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))   
     elif action == "bruteforce_action":
         bruteforce_action()
     elif action == "phishing_action":
@@ -389,6 +422,9 @@ def on_image_click():
         settings_action()
     elif action == "games_action":
         init_game_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+    elif action == "files_action":
+        file_browser_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+        
 def ddos_action():
     global alowed_swipe
     alowed_swipe = False  # Отключаем свайп при заходе
@@ -400,14 +436,11 @@ def ddos_action():
 
     create_ddos_ui(content_frame, go_back_callback=go_back)
 
-def wifi_action():
-    print("Подключение к Wifi!")
-
 def bruteforce_action():
     init_bruteforce_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
 
 def phishing_action():
-    print("Запуск фишинговой атаки!")
+    create_main_phishing_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
 
 def settings_action():
     global alowed_swipe
@@ -419,7 +452,6 @@ def settings_action():
         init_main_ui(content_frame)
 
     init_settings_ui(content_frame, go_back_callback=go_back)
-
 #===========================================================================
 
 # События свайпа

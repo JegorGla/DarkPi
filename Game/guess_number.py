@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import random
-from virtual_keyboard import VirtualKeyboard  # Импортируем виртуальную клавиатуру
+# from virtual_keyboard import VirtualKeyboard  # Импортируем виртуальную клавиатуру
 
 def clear_frame(frame):
     """Очищает все виджеты в указанном фрейме."""
@@ -63,7 +63,7 @@ def show_input(parent_frame, title, message, callback):
     button.pack(pady=10)
 
     # Инициализация виртуальной клавиатуры в правом фрейме
-    VirtualKeyboard(keyboard_frame, entry)
+    # VirtualKeyboard(keyboard_frame, entry)
 
 def ask_for_guess(parent_frame, target_number):
     """Запрашивает у пользователя догадку."""

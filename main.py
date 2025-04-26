@@ -411,9 +411,9 @@ def on_image_click():
     if action == "ddos_action":
         ddos_action()
     elif action == "wifi_action":
-        create_main_wifi_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+        wifi_action()
     elif action == "network_scan_action":
-        ns_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))   
+        network_scan_action()
     elif action == "bruteforce_action":
         bruteforce_action()
     elif action == "phishing_action":
@@ -421,10 +421,11 @@ def on_image_click():
     elif action == "settings_action":
         settings_action()
     elif action == "games_action":
-        init_game_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+        games_action()
     elif action == "files_action":
-        file_browser_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+        files_action()
         
+#========
 def ddos_action():
     global alowed_swipe
     alowed_swipe = False  # Отключаем свайп при заходе
@@ -437,11 +438,68 @@ def ddos_action():
     create_ddos_ui(content_frame, go_back_callback=go_back)
 
 def bruteforce_action():
-    init_bruteforce_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True
+        init_main_ui(content_frame)
+    init_bruteforce_ui(content_frame, go_back_callback=go_back)
+#=======
+def wifi_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True
+        init_main_ui(content_frame)
+    
+    create_main_wifi_ui(content_frame, go_back_callback=go_back)  # Создаем интерфейс Wi-Fi
+#==========
+def network_scan_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
 
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+
+    ns_ui(content_frame, go_back_callback=go_back)  # Создаем интерфейс сканирования сети
+
+#=========
 def phishing_action():
-    create_main_phishing_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True
+        init_main_ui(content_frame)
+    create_main_phishing_ui(content_frame, go_back_callback=go_back)
+#==========
 
+def games_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+
+    init_game_ui(content_frame, go_back_callback=go_back)  # Инициализация интерфейса игр
+#==========
+def files_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+
+    file_browser_ui(content_frame, go_back_callback=go_back)  # Инициализация интерфейса файлового браузера
+#==========
 def settings_action():
     global alowed_swipe
     alowed_swipe = False  # Отключаем свайп при заходе

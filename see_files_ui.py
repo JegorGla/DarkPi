@@ -13,7 +13,7 @@ def file_browser_ui(parent_frame, go_back_callback=None):
     label_path.pack(pady=5)
 
     # Фрейм для кнопок файлов и папок
-    files_frame = ctk.CTkScrollableFrame(parent_frame, width=parent_frame.winfo_width() * 0.7, height=parent_frame.winfo_height() * 0.5)
+    files_frame = ctk.CTkScrollableFrame(parent_frame, width=parent_frame.winfo_width() * 0.7, height=parent_frame.winfo_height() * 0.1)
     files_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
     # Фрейм для управления

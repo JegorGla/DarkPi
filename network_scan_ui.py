@@ -2,6 +2,7 @@ import customtkinter as ctk
 import os
 
 from Network_Scan.nmap_scan import nmap_scan_ui
+from Network_Scan.ping_ui import ping_scan_ui
 
 def clear_frame(frame):
     """Очищает все виджеты в указанном фрейме."""
@@ -27,6 +28,16 @@ def ns_ui(parent_frame, go_back_callback=None):
     )
     nmap_button.place(relx=0.5, rely=0.3, anchor='center')
     #===================================================
+    ping_button = ctk.CTkButton(
+        parent_frame,
+        text="Ping Scan",
+        command=lambda: ping_scan_ui(parent_frame, go_back_callback),
+        font=("Arial", 16),
+        width=parent_frame.winfo_width() * 0.7,
+        height=40
+    )
+    ping_button.place(relx=0.5, rely=0.4, anchor='center')
+    #=================Ping scan button=================
 
     #=================Back button===================
     back_button = ctk.CTkButton(

@@ -129,25 +129,25 @@ def init_classic_bruteforce_ui(parent_frame, go_back_callback=None):
     # Поле ввода IP-адреса или домена
     label_target = ctk.CTkLabel(left_frame, text="Target IP / Domain:", font=("Arial", 16))
     label_target.pack(pady=5)
-    entry_target = ctk.CTkEntry(left_frame, placeholder_text="Enter IP or Domain", font=("Arial", 16))
-    entry_target.pack(pady=5)
+    entry_target = ctk.CTkEntry(left_frame, placeholder_text="Enter IP or Domain", font=("Arial", 16), width=300)
+    entry_target.pack(pady=5, padx=(3, 0))
 
     label_interest = ctk.CTkLabel(left_frame, text="Interest:", font=("Arial", 16))
     label_interest.pack(pady=5)
-    entry_interest = ctk.CTkEntry(left_frame, placeholder_text="Enter Interest", font=("Arial", 16))
-    entry_interest.pack(pady=5)
+    entry_interest = ctk.CTkEntry(left_frame, placeholder_text="Enter Interest", font=("Arial", 16), width=300)
+    entry_interest.pack(pady=5, padx=(3, 0))
 
     label_login = ctk.CTkLabel(left_frame, text="Login:", font=("Arial", 16))
     label_login.pack(pady=5)
-    entry_login = ctk.CTkEntry(left_frame, placeholder_text="Enter Login", font=("Arial", 16))
-    entry_login.pack(pady=5)
+    entry_login = ctk.CTkEntry(left_frame, placeholder_text="Enter Login", font=("Arial", 16), width=300)
+    entry_login.pack(pady=5, padx=(3, 0))
 
     text_box = ctk.CTkTextbox(top_right_frame, font=("Arial", 16))
     text_box.pack(fill="both", expand=True, padx=10, pady=10)
 
-    combobox = ctk.CTkComboBox(left_frame, values=["password list", "Generat password"], font=("Arial", 16), fg_color="black") 
+    combobox = ctk.CTkComboBox(left_frame, values=["password list", "Generate password"], font=("Arial", 16), fg_color="black", width=300) 
     combobox.set("Select password type")  # Устанавливаем текст по умолчанию
-    combobox.pack(pady=10)
+    combobox.pack(pady=10, padx=(3, 0))
 
     start_btn = ctk.CTkButton(
         left_frame,
@@ -155,9 +155,33 @@ def init_classic_bruteforce_ui(parent_frame, go_back_callback=None):
         command=lambda: threading.Thread(target=run_attack, daemon=True).start(),
         font=("Arial", 16),
         fg_color="#000000",  # Чёрный фон
-        text_color="#FFFFFF"  # Белый текст
+        text_color="#FFFFFF",
+        width=40
     )
-    start_btn.pack(pady=7)
+    start_btn.pack(pady=7, padx=10, side="left")  # Размещаем слева
+
+    save_btn = ctk.CTkButton(
+        left_frame,
+        text="Save Results",
+        command=lambda: save_results(text_box.get("1.0", "end-1c")),
+        font=("Arial", 16),
+        fg_color="#000000",  # Чёрный фон
+        text_color="#FFFFFF",  # Белый текст
+        width=40
+    )
+    save_btn.pack(pady=7, padx=10, side="left")  # Размещаем рядом
+
+    back_button = ctk.CTkButton(
+        left_frame,
+        text="← Back",
+        command=go_back_callback,
+        font=("Arial", 16),
+        fg_color="#000000",  # Чёрный фон
+        text_color="#FFFFFF",  # Белый текст
+        width=40,
+    )
+    back_button.pack(pady=7, padx=10, side="left")  # Размещаем рядом
+
 
     def set_target_entry(entry, name):
         keyboard.target_entry = entry  # Устанавливаем целевой элемент ввода для клавиатуры
@@ -192,7 +216,7 @@ def init_classic_bruteforce_ui(parent_frame, go_back_callback=None):
                 text_box.insert("end", "Password list file not found!\n")
                 text_box.yview("end")
                 return
-        elif password_type == "Generated password":
+        elif password_type == "Generate password":
             passwords = generate_passwords(login, interests, text_box)  # Генерируем пароли
         else:
             text_box.insert("end", "Invalid password type selected!\n")
@@ -214,7 +238,7 @@ def init_classic_bruteforce_ui(parent_frame, go_back_callback=None):
                 print(f"Response status: {response.status_code}, Response body: {response.text}")
 
                 # Проверяем успешный ответ (например, если статус код 200)
-                if "✅ Вход успешен!" in response.text:
+                if response.status_code == 200 and "✅ Вход успешен!" in response.text:
                     text_box.insert("end", f"Login successful with password: {password}\n")
                     text_box.yview("end")  # Прокручиваем TextBox вниз
                     break  # Останавливаем атаку, если логин успешен
@@ -230,3 +254,10 @@ def init_classic_bruteforce_ui(parent_frame, go_back_callback=None):
 
         text_box.insert("end", "Attack finished!\n")
         text_box.yview("end")  # Прокручиваем TextBox вниз
+
+    def save_results(results):
+        """Сохраняет результаты в файл."""
+        if not os.path.exists("results"):
+            os.makedirs("results")
+        with open(f"results/{entry_login.get()}_results.txt", "w") as f:
+            f.write(results)

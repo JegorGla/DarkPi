@@ -9,13 +9,14 @@ from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 from greeting import show_greeting  # Импортируем функцию показа приветствия
 from DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
-from settings_ui import init_settings_ui  # Импортируем функцию создания настроек
+from settings_ui import init_settings_ui, selected_timeout  # Импортируем функцию создания настроек и выбранное время
 from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
 from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
 import logging
+import json
 #====================================================================
 
 
@@ -310,8 +311,36 @@ def reset_inactivity_timer(event=None):
     #print(last_activity_time)  # Для отладки
     hide_gif_animation()  # Останавливаем отображение GIF при активности
 
+def load_timeout_setting():
+    """Загрузка сохраненного значения времени из файла JSON."""
+    global selected_timeout
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            selected_timeout = data.get("timeout", None)
+    except (FileNotFoundError, json.JSONDecodeError):
+        selected_timeout = None  # Если файл не найден или поврежден
+
+# Загрузка настроек при старте программы
+load_timeout_setting()
+
 # Проверка на бездействие
 def check_inactivity():
+    """Проверка на бездействие."""
+    global inactivity_timeout
+
+    # Преобразуем текстовое значение `selected_timeout` в секунды
+    if selected_timeout:  # Если значение выбрано
+        timeout_mapping = {
+            "5 seconds": 5,
+            "10 seconds": 10,
+            "30 seconds": 30,
+            "1 minute": 60,
+            "5 minutes": 300,
+        }
+        inactivity_timeout = timeout_mapping.get(selected_timeout, 5)  # Значение по умолчанию — 5 секунд
+
+    # Проверяем, прошло ли время бездействия
     if time.time() - last_activity_time > inactivity_timeout:
         show_gif_animation()  # Показываем анимацию GIF при бездействии
     else:

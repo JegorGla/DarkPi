@@ -2,6 +2,8 @@ import customtkinter as ctk
 import pywifi
 from pywifi import const
 import time
+import json
+import os
 from virtual_keyboard import NormalKeyboard  # Импортируем виртуальную клавиатуру
 
 def clear_frame(frame):
@@ -64,8 +66,26 @@ def create_wifi_ui(parent_frame, go_back_callback):
         success = connect_to_wifi(ssid, password)
         if success:
             label_status = ctk.CTkLabel(parent_frame, text=f"Успешно подключено к {ssid}!", font=("Arial", 14))
-            with open("variables.txt", "w") as file:
-                file.write(ssid)
+            try:
+                # Проверяем, существует ли файл
+                if os.path.exists("settings.json"):
+                    # Если файл существует, загружаем данные
+                    with open("settings.json", "r") as file:
+                        data = json.load(file)
+                else:
+                    # Если файл не существует, создаем пустой словарь
+                    data = {}
+
+                # Добавляем или обновляем SSID
+                data["ssid"] = ssid
+
+                # Записываем обновленные данные обратно в файл
+                with open("settings.json", "w") as file:
+                    json.dump(data, file, indent=4)
+                print(f"[INFO] SSID '{ssid}' saved to settings.json")
+            except Exception as e:
+                print(f"[ERROR] Failed to save SSID to settings.json: {e}")
+
         else:
             label_status = ctk.CTkLabel(parent_frame, text=f"Не удалось подключиться к {ssid}.", font=("Arial", 14))
         label_status.pack(pady=10)

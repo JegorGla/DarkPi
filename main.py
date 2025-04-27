@@ -143,13 +143,15 @@ def is_wifi_connected():
 def show_connected_network():
     """Отображает название подключенной сети."""
     try:
-        with open("variables.txt", "r", encoding="utf-8") as file:
-            ssid = file.read().strip()
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            ssid = data.get("ssid", None)
             if ssid:
                 wifi_znak_label.configure(text=f"{ssid}")
                 app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Скрываем текст через 2 секунды
             else:
                 wifi_znak_label.configure(text="No connected")
+                app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Скрываем текст через 2 секунды
     except FileNotFoundError:
         wifi_znak_label.configure(text="Файл с данными сети не найден.")
 

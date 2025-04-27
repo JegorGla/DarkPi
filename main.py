@@ -321,11 +321,10 @@ def load_timeout_setting():
     except (FileNotFoundError, json.JSONDecodeError):
         selected_timeout = None  # Если файл не найден или поврежден
 
-# Загрузка настроек при старте программы
-load_timeout_setting()
-
 # Проверка на бездействие
 def check_inactivity():
+    # Загрузка настроек при старте программы
+    load_timeout_setting()
     """Проверка на бездействие."""
     global inactivity_timeout
 

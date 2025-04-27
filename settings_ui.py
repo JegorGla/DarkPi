@@ -1,5 +1,6 @@
 import json
 import customtkinter as ctk
+import os
 
 from settings.about_device import about_device_ui  # Импортируем функцию очистки фрейма из about_device.py
 
@@ -10,30 +11,52 @@ def clear_frame(frame):
 
 selected_timeout = None  # Глобальная переменная для хранения значения времени
 
-# Функция для сохранения значения в файл
+def create_default_settings():
+    """Создание файла с настройками по умолчанию."""
+    default_settings = {
+        "timeout": "5 seconds"
+    }
+    try:
+        with open("settings.json", "w") as f:
+            json.dump(default_settings, f, indent=4)
+        print("[INFO] Default settings file created with timeout: 5 seconds")
+    except Exception as e:
+        print(f"[ERROR] Error creating settings file: {e}")
+
+def load_timeout_setting():
+    """Загрузка сохраненного значения времени из файла JSON, создание файла, если его нет."""
+    global selected_timeout
+    if os.path.exists("settings.json"):
+        try:
+            with open("settings.json", "r") as f:
+                data = json.load(f)
+                selected_timeout = data.get("timeout", None)
+                print(f"[INFO] Loaded timeout setting from file: {selected_timeout}")
+        except (json.JSONDecodeError, KeyError):
+            selected_timeout = None
+            print("[WARNING] Failed to parse settings.json, setting timeout to None")
+    else:
+        print("[WARNING] settings.json not found, creating default settings...")
+        create_default_settings()
+        selected_timeout = "5 seconds"
+
 def save_timeout_setting():
     """Сохранение выбранного времени в файл JSON."""
     if selected_timeout:
-        with open("settings.json", "w") as f:
-            json.dump({"timeout": selected_timeout}, f)
+        try:
+            print(f"[DEBUG] Saving timeout: {selected_timeout}")
+            with open("settings.json", "w") as f:
+                json.dump({"timeout": selected_timeout}, f, indent=4)
+            print(f"[INFO] Timeout setting saved as {selected_timeout}")
+        except Exception as e:
+            print(f"[ERROR] Error saving settings: {e}")
 
-# Функция для загрузки сохраненного значения из файла
-def load_timeout_setting():
-    """Загрузка сохраненного значения из файла JSON, если оно есть."""
+def set_gif_timeout(event=None):
+    """Функция для обработки выбранного времени без задержки."""
     global selected_timeout
-    try:
-        with open("settings.json", "r") as f:
-            data = json.load(f)
-            selected_timeout = data.get("timeout", None)
-    except (FileNotFoundError, json.JSONDecodeError):
-        selected_timeout = None  # Если файл не найден или его содержимое повреждено
-
-def set_gif_timeout(event):
-    """Функция для обработки выбранного времени."""
-    global selected_timeout
-    selected_timeout = timeout_combo.get()  # Сохраняем выбранное значение
-    print(f"GIF Timeout set to: {selected_timeout}")  # Для проверки, можно заменить на сохранение в файл
-    save_timeout_setting()  # Сохраняем настройку в файл
+    selected_timeout = timeout_combo.get()
+    print(f"[DEBUG] New timeout selected: {selected_timeout}")
+    save_timeout_setting()
 
 def init_settings_ui(parent_frame, go_back_callback):
     """Функция для инициализации UI настроек."""
@@ -44,7 +67,13 @@ def init_settings_ui(parent_frame, go_back_callback):
     title.place(relx=0.5, rely=0.1, anchor="center")
 
     # Кнопка "Назад"
-    back_btn = ctk.CTkButton(parent_frame, text="← Back", command=go_back_callback)
+    def go_back():
+        global selected_timeout
+        selected_timeout = timeout_combo.get()  # Получаем текущее значение
+        save_timeout_setting()                  # Сохраняем перед возвратом
+        go_back_callback()                       # Переход обратно
+
+    back_btn = ctk.CTkButton(parent_frame, text="← Back", command=go_back)
     back_btn.place(relx=0.01, rely=0.01, anchor="nw")
 
     # ==== Блок Use Proxies ====  
@@ -67,10 +96,12 @@ def init_settings_ui(parent_frame, go_back_callback):
     )
     about_device_btn.place(relx=0.5, rely=0.4, anchor="center", relwidth=0.9)
 
-    # =====================================================
+    # Горизонтальная линия
+    separator = ctk.CTkFrame(parent_frame, height=1, fg_color="#444444")
+    separator.place(relx=0.05, rely=0.3, relwidth=0.9)
 
-    # Настройка времени для GIF-анимации
-    global timeout_combo  # Делаем ComboBox глобальным для доступа из других функций
+    # ==== Настройка времени для GIF-анимации ====
+    global timeout_combo
     timeout_combo = ctk.CTkComboBox(
         parent_frame, 
         values=["5 seconds", "10 seconds", "30 seconds", "1 minute", "5 minutes"],
@@ -79,12 +110,8 @@ def init_settings_ui(parent_frame, go_back_callback):
     )
     timeout_combo.place(relx=0.5, rely=0.6, anchor="center", relwidth=0.9)
 
-    timeout_combo.set(selected_timeout if selected_timeout else "Select timeout")  # Загружаем ранее сохранённое значение
-    timeout_combo.bind("<<ComboboxSelected>>", set_gif_timeout)  # Привязка события
-
-    # Горизонтальная линия
-    separator = ctk.CTkFrame(parent_frame, height=1, fg_color="#444444")
-    separator.place(relx=0.05, rely=0.3, relwidth=0.9)
+    timeout_combo.set(selected_timeout if selected_timeout else "Select timeout")
+    timeout_combo.bind("<<ComboboxSelected>>", set_gif_timeout)
 
 # Загружаем сохранённую настройку при запуске
 load_timeout_setting()

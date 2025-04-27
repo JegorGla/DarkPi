@@ -9,7 +9,7 @@ def show_greeting(parent_frame, callback=None):
 
     greeting_label = ctk.CTkLabel(
         greeting_frame,
-        text=f"Добро пожаловать в DarkPi,\n{os.getlogin()}!",
+        text=f"Welcome to the DarkPi,\n{os.getlogin()}!",
         font=("Arial", 24),
         text_color="#000000"
     )

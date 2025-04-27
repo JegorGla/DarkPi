@@ -21,7 +21,7 @@ def init_game_ui(parent_frame, go_back_callback):
     # Кнопка для игры "Угадай число"
     button_guess_number = ctk.CTkButton(
         parent_frame, text="Угадай число", font=("Arial", 16),
-        command=lambda: start_guess_number_game(parent_frame)  # Запуск игры "Угадай число"
+        command=lambda: start_guess_number_game(parent_frame, go_back_callback=go_back_callback)  # Запуск игры "Угадай число"
     )
     button_guess_number.pack(pady=10)
 

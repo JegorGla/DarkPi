@@ -64,10 +64,13 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
         text="Start Scan",
         command=lambda: threading.Thread(target=run_scan, daemon=True).start(),
         font=("Arial", 16),
+        fg_color="#000000",      # Чёрный фон
+        text_color="#00FF00",    # Ярко-зелёный текст
+        border_color="#00FF00",  # Зелёная рамка
         width=200,
-        height=40
+        height=30
     )
-    scan_button.pack(pady=20)
+    scan_button.pack(pady=7)
 
     # Кнопка "Назад"
     back_button = ctk.CTkButton(
@@ -76,9 +79,9 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
         command=lambda: go_back_callback() if go_back_callback else None,
         font=("Arial", 16),
         width=200,
-        height=40
+        height=30
     )
-    back_button.pack(pady=10)
+    back_button.pack(pady=7)
 
     # Кнопка "Сохранить результаты"
     save_button = ctk.CTkButton(
@@ -87,9 +90,9 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
         command=lambda: save_results(),
         font=("Arial", 16),
         width=200,
-        height=40
+        height=30
     )
-    save_button.pack(pady=10)
+    save_button.pack(pady=7)
 
     # TextBox для результатов (в верхней правой части)
     text_result = ctk.CTkTextbox(top_right_frame, font=("Arial", 14))
@@ -100,7 +103,7 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
 
     def set_target_entry(entry, name):
         keyboard.target_entry = entry
-        print(f"[DEBUG] Активное поле ввода: {name}")
+        #print(f"[DEBUG] Активное поле ввода: {name}")
 
     # Функции для обработки ввода с клавиатуры
     def on_key_pressed(key):

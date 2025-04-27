@@ -22,7 +22,7 @@ def create_ddos_ui(parent_frame, go_back_callback=None):
     syn_flood_button.place(relx=0.5, rely=0.3, anchor="center")
 
     #=======Slowloris=========
-    slowloris_btn = ctk.CTkButton(parent_frame, text="Slowloris", fg_color="black", border_color="#8d33ff", hover_color="#2a104c", border_width=2, font=("Arial", 16), command=lambda: slowloris_ui(parent_frame), width=parent_frame.winfo_width() * 0.7, height=40)
+    slowloris_btn = ctk.CTkButton(parent_frame, text="Slowloris", fg_color="black", border_color="#8d33ff", hover_color="#2a104c", border_width=2, font=("Arial", 16), command=lambda: slowloris_ui(parent_frame, go_back_callback), width=parent_frame.winfo_width() * 0.7, height=40)
     slowloris_btn.place(relx=0.5, rely=0.4, anchor="center")
 
 

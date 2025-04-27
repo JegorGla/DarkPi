@@ -1,0 +1,6 @@
+customtkinter
+requests
+nmap
+flask
+pillow
+pywifi

@@ -69,6 +69,20 @@ def slowloris_ui(parent_frame, go_back_callback=None):
     )
     start_btn.place(relx=0.5, rely=0.8, anchor="center")
 
+    back_btn = ctk.CTkButton(
+        parent_frame,
+        text="← Back",
+        command=go_back_callback,
+        font=("Arial", 16),
+        width=parent_frame.winfo_width() * 0.7,
+        height=40,
+        fg_color="black", 
+        border_color="#8d33ff", 
+        hover_color="#2a104c", 
+        border_width=2
+    )
+    back_btn.place(relx=0.5, rely=0.9, anchor="center")
+
     # Textbox для вывода результатов
     # text_box = ctk.CTkTextbox(parent_frame, width=parent_frame.winfo_width() * 0.7, height=70, font=("Arial", 12))
     # text_box.place(relx=0.5, rely=0.85, anchor="center")

@@ -2,7 +2,7 @@ import customtkinter as ctk
 import pywifi
 from pywifi import const
 import time
-#from virtual_keyboard import VirtualKeyboard  # Импортируем виртуальную клавиатуру
+from virtual_keyboard import NormalKeyboard  # Импортируем виртуальную клавиатуру
 
 def clear_frame(frame):
     """Очищает все виджеты в указанном фрейме."""
@@ -83,18 +83,20 @@ def create_wifi_ui(parent_frame, go_back_callback):
         entry.pack(pady=10)
         entry.focus()
 
-        connect_button = ctk.CTkButton(parent_frame, text="Подключиться", command=lambda: on_password_submit(ssid, entry, keyboard_frame))
+        # !!! СНАЧАЛА создаём фрейм для клавиатуры
+        keyboard_frame = ctk.CTkFrame(parent_frame, width=200, height=400)
+        keyboard_frame.place(relx=0.5, rely=0.6, anchor="center", relwidth=0.8)
+
+        # !!! Теперь создаём клавиатуру
+        keyboard = NormalKeyboard(keyboard_frame, entry)
+
+        # Кнопка Подключиться
+        connect_button = ctk.CTkButton(parent_frame, text="Connect", command=lambda: on_password_submit(ssid, entry, keyboard_frame))
         connect_button.pack(pady=10)
 
-        # # Фрейм для виртуальной клавиатуры
-        keyboard_frame = ctk.CTkFrame(parent_frame, width=300, height=100)  # Устанавливаем размеры при создании
-        keyboard_frame.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.8)  # Располагаем в центре
-
-        back_button = ctk.CTkButton(parent_frame, text="← Назад", command=lambda: create_wifi_ui(parent_frame, go_back_callback))
-        back_button.place(relx=0.05, rely=0.05, anchor="nw")  # 5% от ширины и 5% от высоты, якорь в левом верхнем углу
-
-        # Инициализация виртуальной клавиатуры
-        # VirtualKeyboard(keyboard_frame, entry, lambda: on_password_submit(ssid, entry, keyboard_frame))
+        # Кнопка Назад
+        back_button = ctk.CTkButton(parent_frame, text="← Back", command=lambda: create_wifi_ui(parent_frame, go_back_callback))
+        back_button.place(relx=0.05, rely=0.05, anchor="nw")
 
     def on_scan_button_click():
         """Обрабатывает нажатие на кнопку 'Сканировать сети'"""

@@ -47,7 +47,7 @@ logging.getLogger("pywifi").setLevel(logging.CRITICAL)
 
 #=============================Слайды=============================
 slides = [
-    {"image": "images/DDoS_image.png", "text": "DDOS attack", "action": "ddos_action"},
+    {"image": "images/DDoS_image.png", "text": "DDOS attack\n (site test)", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
     {"image": "images/NetworkScan.png", "text": "Network Scan", "action": "network_scan_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},

@@ -17,6 +17,7 @@ import time
 import pywifi
 import logging
 import json
+import os
 #====================================================================
 
 
@@ -36,6 +37,7 @@ gif_frames = []
 gif_durations = []
 gif_animation_running = False
 gif_visible = False
+current_edition = None
 
 image_button_current = None
 image_button_next = None
@@ -310,7 +312,7 @@ def show_loading(callback=None):
 def reset_inactivity_timer(event=None):
     global last_activity_time
     last_activity_time = time.time()  # Сброс таймера
-    #print(last_activity_time)  # Для отладки
+    ##print(last_activity_time)  # Для отладки
     hide_gif_animation()  # Останавливаем отображение GIF при активности
 
 def load_timeout_setting():
@@ -349,15 +351,47 @@ def check_inactivity():
 
     app.after(1000, check_inactivity)  # Проверка каждую секунду
 
-# Функция для показа GIF анимации
+def get_current_edition():
+    """Функция для загрузки актуальной редакции из settings.json."""
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            edition = data.get("edition", "Normal edition")  # Значение по умолчанию
+            print(f"[INFO] Loaded edition from settings: {edition}")
+            return edition
+    except (json.JSONDecodeError, FileNotFoundError) as e:
+        print(f"[ERROR] {e}. Returning default edition 'Normal edition'.")
+        return "Normal edition"  # Возвращаем дефолтное значение
+
 def show_gif_animation():
-    global gif_label, gif_frames, gif_durations, gif_animation_running, gif_visible
+    global gif_label, gif_frames, gif_durations, gif_animation_running, gif_visible, current_edition
+
+    edition = get_current_edition()  # Получаем актуальное значение редакции
+
+    # Проверяем, если редакция изменилась
+    if edition != current_edition:
+        current_edition = edition  # Обновляем текущую редакцию
+        gif_frames = []  # Очищаем старые кадры
+        gif_durations = []  # Очищаем длительности кадров
+        gif_animation_running = False  # Останавливаем анимацию
+
+    try:
+        # Проверяем наличие файла GIF в зависимости от редакции
+        if edition == "Normal edition" and os.path.exists("images/EvilEye.gif"):
+            gif = Image.open("images/EvilEye.gif")
+        elif edition == "P Diddy edition" and os.path.exists("images/P_ddidy.gif"):
+            gif = Image.open("images/P_ddidy.gif")
+        else:
+            raise FileNotFoundError("GIF file not found for selected edition.")
+    except (FileNotFoundError, Exception) as e:
+        print(f"[ERROR] {e}")
+        return  # Возвращаемся, если файл не найден или ошибка с загрузкой
 
     if not alowed_gif_animation:
         return
 
     if gif_visible:
-        return  # уже отображается — ничего не делаем
+        return  # Если анимация уже отображается, ничего не делаем
 
     gif_visible = True  # начинаем показывать
 
@@ -368,7 +402,7 @@ def show_gif_animation():
         gif_label.place(relx=0.5, rely=0.5, anchor="center", relwidth=1, relheight=1)
 
     if not gif_frames:
-        gif = Image.open("images/EvilEye.gif")
+        # Загружаем кадры GIF
         for frame in ImageSequence.Iterator(gif):
             resized = frame.resize((app.winfo_width(), app.winfo_height()), Image.Resampling.LANCZOS)
             gif_frames.append(ImageTk.PhotoImage(resized))
@@ -379,14 +413,13 @@ def show_gif_animation():
 
         def update_gif(index=0):
             if not gif_visible:
-                return  # остановим цикл, если гиф скрыта
+                return  # Если гиф скрыта, останавливаем цикл
             gif_label.configure(image=gif_frames[index])
-            gif_label.image = gif_frames[index]
+            gif_label.image = gif_frames[index]  # Сохраняем ссылку на изображение
             next_index = (index + 1) % len(gif_frames)
             app.after(gif_durations[index], update_gif, next_index)
 
         update_gif()
-
 
 def hide_gif_animation():
     global gif_visible, gif_animation_running
@@ -547,12 +580,12 @@ def on_swipe_start(event):
     global start_x, swipe_enabled, alowed_swipe
 
     if not alowed_swipe:
-        print("[SWIPE START] Свайп отключён — ничего не делаем.")
+        #print("[SWIPE START] Свайп отключён — ничего не делаем.")
         start_x = None
         return
 
     if not swipe_enabled:
-        print("[SWIPE START] Свайп отключён — ничего не делаем.")
+        #print("[SWIPE START] Свайп отключён — ничего не делаем.")
         start_x = None
         return
     # Получаем корневое окно
@@ -562,16 +595,16 @@ def on_swipe_start(event):
     try:
         widget = root.nametowidget(str(event.widget))
     except Exception as e:
-        print(f"[SWIPE START] Ошибка при получении виджета: {e}")
+        #print(f"[SWIPE START] Ошибка при получении виджета: {e}")
         widget = event.widget
 
-    print(f"[SWIPE START] Widget: {widget}, Type: {type(widget)}")
+    #print(f"[SWIPE START] Widget: {widget}, Type: {type(widget)}")
 
     # Проверяем, если свайп начался на кнопке или её потомке — отменяем
     parent = widget
     while parent:
         if isinstance(parent, ctk.CTkButton):
-            print("[SWIPE START] Свайп отключён — начался на кнопке.")
+            #print("[SWIPE START] Свайп отключён — начался на кнопке.")
             start_x = None
             return
         try:
@@ -581,46 +614,47 @@ def on_swipe_start(event):
 
     # Проверка — разрешён ли свайп только на определённом виджете
     if not isinstance(widget, ctk.CTkCanvas):
-        print("[SWIPE START] Свайп запрещён — не на Canvas.")
+        #print("[SWIPE START] Свайп запрещён — не на Canvas.")
         start_x = None
         return
 
     # Всё ок — активируем свайп
     start_x = event.x
-    print(f"[SWIPE START] Свайп активирован. start_x = {start_x}")
+    #print(f"[SWIPE START] Свайп активирован. start_x = {start_x}")
 
 
 def on_swipe_end(event):
     global start_x
 
     if start_x is None:
-        print("[SWIPE END] Свайп был отключён — ничего не делаем.")
+        #print("[SWIPE END] Свайп был отключён — ничего не делаем.")
         return
 
     end_x = event.x
     delta = end_x - start_x
-    print(f"[SWIPE END] end_x = {end_x}, delta = {delta}")
+    #print(f"[SWIPE END] end_x = {end_x}, delta = {delta}")
 
     if abs(delta) > 50:
         if delta > 0:
-            print("[SWIPE] Свайп вправо")
+            #print("[SWIPE] Свайп вправо")
             prev_slide()
         else:
-            print("[SWIPE] Свайп влево")
+            #print("[SWIPE] Свайп влево")
             next_slide()
     else:
-        print("[SWIPE] Слишком маленькое смещение — свайп проигнорирован.")
+        pass  # Игнорируем свайп, если смещение слишком маленькое
+        #print("[SWIPE] Слишком маленькое смещение — свайп проигнорирован.")
 
 def disable_swipe_temporarily(seconds=0.5):
     global swipe_enabled
     swipe_enabled = False
-    print(f"[SWIPE] Свайп временно отключён на {seconds} сек")
+    #print(f"[SWIPE] Свайп временно отключён на {seconds} сек")
     app.after(int(seconds * 1000), enable_swipe)
 
 def enable_swipe():
     global swipe_enabled
     swipe_enabled = True
-    print("[SWIPE] Свайп снова разрешён")
+    #print("[SWIPE] Свайп снова разрешён")
 
 
 # Привязка событий к окну

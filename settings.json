@@ -1,4 +1,6 @@
 {
-    "timeout": "30 seconds",
-    "ssid": "Orange-7442"
+    "timeout": "5 seconds",
+    "ssid": "Orange-7442",
+    "edition": "P Diddy edition",
+    "use_proxies": false
 }

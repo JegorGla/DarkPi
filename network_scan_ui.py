@@ -3,6 +3,7 @@ import os
 
 from Network_Scan.nmap_scan import nmap_scan_ui
 from Network_Scan.ping_ui import ping_scan_ui
+from Network_Scan.geo_ui import display_ip_info
 
 def clear_frame(frame):
     """Очищает все виджеты в указанном фрейме."""
@@ -39,6 +40,17 @@ def ns_ui(parent_frame, go_back_callback=None):
     ping_button.place(relx=0.5, rely=0.4, anchor='center')
     #=================Ping scan button=================
 
+    geo_ip_button = ctk.CTkButton(
+        parent_frame,
+        text="Geo IP",
+        command=lambda: display_ip_info(None, parent_frame, go_back_callback),
+        font=("Arial", 16),
+        width=parent_frame.winfo_width() * 0.7,
+        height=40
+    )
+    geo_ip_button.place(relx=0.5, rely=0.5, anchor='center')
+    #===================================================
+
     #=================Back button===================
     back_button = ctk.CTkButton(
         parent_frame,
@@ -48,4 +60,4 @@ def ns_ui(parent_frame, go_back_callback=None):
         width=parent_frame.winfo_width() * 0.7,
         height=40
     )
-    back_button.place(relx=0.5, rely=0.5, anchor='center')
+    back_button.place(relx=0.5, rely=0.6, anchor='center')

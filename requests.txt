@@ -5,3 +5,5 @@ flask
 pillow
 pywifi
 tornet
+psutil
+netifaces

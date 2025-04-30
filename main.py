@@ -12,6 +12,7 @@ from DVD_ui import create_dvd_ui  # Импортируем функцию соз
 from settings_ui import init_settings_ui, selected_timeout  # Импортируем функцию создания настроек и выбранное время
 from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
 from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
+from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
@@ -52,11 +53,13 @@ slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack\n (site test)", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
     {"image": "images/NetworkScan.png", "text": "Network Scan", "action": "network_scan_action"},
+    {"image": "images/EvilAP.png", "text": "EvilAp", "action": "evilap_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
     {"image": "images/Folder.png", "text": "See files", "action": "files_action"},
     {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
+    {"image": "images/Pi-helper.png", "text": "Pi-helper", "action": "pi_helper_action"}
 ]
 
 # Инициализация окна

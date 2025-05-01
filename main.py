@@ -12,7 +12,8 @@ from DVD_ui import create_dvd_ui  # Импортируем функцию соз
 from settings_ui import init_settings_ui, selected_timeout  # Импортируем функцию создания настроек и выбранное время
 from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
 from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
-from setup import setup  # Импортируем функцию настройки
+from pi_helper_ui import pi_helper_ui
+# from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
@@ -59,7 +60,7 @@ slides = [
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
     {"image": "images/Folder.png", "text": "See files", "action": "files_action"},
     {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
-    {"image": "images/Pi-helper.png", "text": "Pi-helper", "action": "pi_helper_action"}
+    {"image": "images/pi_helper.png", "text": "Pi-helper", "action": "pi_helper_action"}
 ]
 
 # Инициализация окна
@@ -490,6 +491,8 @@ def on_image_click():
         games_action()
     elif action == "files_action":
         files_action()
+    elif action == "pi_helper_action":
+        pi_helper_action()
         
 #========
 def ddos_action():
@@ -502,7 +505,7 @@ def ddos_action():
         init_main_ui(content_frame)
 
     create_ddos_ui(content_frame, go_back_callback=go_back)
-
+#========
 def bruteforce_action():
     global alowed_swipe
     alowed_swipe = False  # Отключаем свайп при заходе
@@ -576,6 +579,16 @@ def settings_action():
         init_main_ui(content_frame)
 
     init_settings_ui(content_frame, go_back_callback=go_back)
+#========
+def pi_helper_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+    pi_helper_ui(content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа

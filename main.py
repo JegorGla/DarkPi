@@ -13,6 +13,8 @@ from settings_ui import init_settings_ui, selected_timeout  # Импортиру
 from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
 from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
 from pi_helper_ui import pi_helper_ui
+from rat_ui import create_rat_ui
+from osint_ui import create_osint_ui
 # from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
@@ -57,6 +59,9 @@ slides = [
     {"image": "images/EvilAP.png", "text": "EvilAp", "action": "evilap_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
+    {"image": "images/Rat.png", "text": "RAT\nRemote Access Trojan", "action": "rat_action"},
+    {"image": "images/BadBLE.png", "text": "BadBLE", "action": "bad_ble_action"},
+    {"image": "images/Osint.png", "text": "Osint", "action": "osint_action"},
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
     {"image": "images/Folder.png", "text": "See files", "action": "files_action"},
     {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
@@ -487,12 +492,16 @@ def on_image_click():
         phishing_action()
     elif action == "settings_action":
         settings_action()
+    elif action == "osint_action":
+        osint_action()
     elif action == "games_action":
         games_action()
     elif action == "files_action":
         files_action()
     elif action == "pi_helper_action":
         pi_helper_action()
+    elif action == "rat_action":
+        rat_action()
         
 #========
 def ddos_action():
@@ -589,6 +598,26 @@ def pi_helper_action():
         alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
         init_main_ui(content_frame)
     pi_helper_ui(content_frame, go_back_callback=go_back)
+#=======
+def rat_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+    create_rat_ui(content_frame, go_back_callback=go_back)
+#========
+def osint_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+    create_osint_ui(content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа

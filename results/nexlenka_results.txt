@@ -1,0 +1,22 @@
+[?] https://twitter.com/nexlenka returned status 400
+[+] Found: https://facebook.com/nexlenka
+[+] Found: https://instagram.com/nexlenka
+[?] https://tiktok.com/@nexlenka returned status 403
+[?] https://linkedin.com/in/nexlenka returned status 999
+[+] Found: https://reddit.com/user/nexlenka
+[+] Found: https://pinterest.com/nexlenka
+[?] https://snapchat.com/add/nexlenka returned status 403
+[+] Found: https://medium.com/@nexlenka
+[+] Found: https://twitch.tv/nexlenka
+[+] Found: https://badoo.com/profile/nexlenka
+[?] https://imgur.com/user/nexlenka returned status 429
+[?] https://tripadvisor.com/Profile/nexlenka returned status 403
+[!] Error: https://ask.fm/nexlenka -> HTTPSConnectionPool(host='ask.fm', port=443): Max retries exceeded with url: /nexlenka (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x000002C83946F650>: Failed to resolve 'ask.fm' ([Errno 11001] getaddrinfo failed)"))
+[+] Found: https://weheartit.com/nexlenka
+[+] Found: https://slideshare.net/nexlenka
+[?] https://angel.co/u/nexlenka returned status 403
+[+] Found: https://500px.com/p/nexlenka
+[+] Found: https://steamcommunity.com/id/nexlenka
+[?] https://leetcode.com/nexlenka returned status 403
+SEARCH ENDED
+

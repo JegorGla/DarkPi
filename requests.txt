@@ -7,3 +7,5 @@ pywifi
 tornet
 psutil
 netifaces
+pyinstaller
+phonenumbers

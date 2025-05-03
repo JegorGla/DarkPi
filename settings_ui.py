@@ -151,12 +151,9 @@ def init_settings_ui(parent_frame, go_back_callback):
         font=("Arial", 16), 
         state="readonly",
     )
-    # edition_combo.place(relx=0.5, rely=0.7, anchor="center", relwidth=0.9)
-    # edition_combo.set(selected_edition if selected_edition else "Select edition")
-    # edition_combo.bind("<<ComboboxSelected>>", set_edition)
-
-
-
+    edition_combo.place(relx=0.5, rely=0.7, anchor="center", relwidth=0.9)
+    edition_combo.set(selected_edition if selected_edition else "Select edition")
+    edition_combo.bind("<<ComboboxSelected>>", set_edition)
 
 # Загружаем сохранённую настройку при запуске
 load_timeout_setting()

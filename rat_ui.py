@@ -12,13 +12,8 @@ def create_rat_ui(parent_frame, go_back_callback=None):
     title_label = ctk.CTkLabel(parent_frame, text="Remote Access Tool (RAT)", font=ctk.CTkFont(size=20, weight="bold"))
     title_label.pack(pady=(20, 10))
 
-    # Кнопка запуска сервера
-    start_server_btn = ctk.CTkButton(
-        parent_frame, 
-        text="Start Server", 
-        command=lambda: server(parent_frame, go_back_callback)
-    )
-    start_server_btn.pack(pady=10)
+    command_line = ctk.CTkButton(parent_frame, text="💻 Command line", command=lambda: server(parent_frame, go_back_callback))
+    command_line.pack(pady=10)
 
     # Кнопка "назад"
     if go_back_callback:

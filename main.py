@@ -15,6 +15,7 @@ from see_files_ui import file_browser_ui  # Импортируем функци�
 from pi_helper_ui import pi_helper_ui
 from rat_ui import create_rat_ui
 from osint_ui import create_osint_ui
+from qr_code_ui import create_qr_code_ui
 # from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
@@ -56,6 +57,8 @@ slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack\n (site test)", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
     {"image": "images/NetworkScan.png", "text": "Network Scan", "action": "network_scan_action"},
+    {"image": "images/Site_Scan.png", "text": "Site Scan", "action": "site_scan_action"},
+    {"image": "images/Qr_code_gen.png", "text": "QRCode Generation", "action": "qr_coder_action"},
     {"image": "images/EvilAP.png", "text": "EvilAp", "action": "evilap_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
@@ -502,7 +505,9 @@ def on_image_click():
         pi_helper_action()
     elif action == "rat_action":
         rat_action()
-        
+    elif action == "qr_coder_action":
+        qr_coder_action()
+
 #========
 def ddos_action():
     global alowed_swipe
@@ -618,6 +623,18 @@ def osint_action():
         alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
         init_main_ui(content_frame)
     create_osint_ui(content_frame, go_back_callback=go_back)
+#========
+def qr_coder_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_app_layout()
+        init_main_ui(content_frame)
+
+    create_qr_code_ui(content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа

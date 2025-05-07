@@ -1,9 +1,11 @@
 import customtkinter as ctk
 
 class NormalKeyboard:
-    def __init__(self, parent_frame, target_entry):
+    def __init__(self, parent_frame, target_entry, key_width=40, key_height=40):
         self.parent_frame = parent_frame
-        self.target_entry = target_entry  # Изначально целевое поле
+        self.target_entry = target_entry
+        self.key_width = key_width
+        self.key_height = key_height
         self.create_keyboard()
 
     def create_keyboard(self):
@@ -15,7 +17,7 @@ class NormalKeyboard:
             ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
             ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
             ['z', 'x', 'c', 'v', 'b', 'n', 'm'],
-            ['←', '/', '.com', ':', 'OK']
+            [' ', '←', '/', '.com', ':', 'OK']  # Додано пробіл
         ]
 
         for row in keys:
@@ -24,23 +26,24 @@ class NormalKeyboard:
 
             for key in row:
                 button = ctk.CTkButton(
-                    row_frame, text=key, width=40, height=20,
+                    row_frame,
+                    text=key,
+                    width=self.key_width,
+                    height=self.key_height,
                     command=lambda k=key: self.on_key_press(k)
                 )
-                button.pack(side="left", padx=1)
+                button.pack(side="left", padx=2, pady=2)
 
     def on_key_press(self, key):
-        if key == '←':  # Удалить последний символ
+        if key == '←':
             current_text = self.target_entry.get()
             self.target_entry.delete(0, "end")
             self.target_entry.insert(0, current_text[:-1])
-        elif key == 'OK':  # Завершить ввод
+        elif key == 'OK':
             self.target_entry.event_generate("<Return>")
-        elif key == ' ':  # Добавить пробел
-            self.target_entry.insert("end", " ")
-        else:  # Добавить символ
+        else:
             self.target_entry.insert("end", key)
-
+            
 class NumericKeyboard:
     def __init__(self, parent_frame, target_entry):
         self.parent_frame = parent_frame

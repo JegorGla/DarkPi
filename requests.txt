@@ -9,3 +9,4 @@ psutil
 netifaces
 pyinstaller
 phonenumbers
+firebase_admin

@@ -155,6 +155,7 @@ def send_command_to_client(command_line, client_socket, text_box):
             client_socket.send(command.encode(encoding="utf-8", errors="replace"))
             response = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
             safe_textbox_insert(text_box, f"📥 Ответ от клиента: {response}\n")
+            safe_textbox_insert(text_box, "="*24+"End Text"+"="*24)
         except Exception as e:
             safe_textbox_insert(text_box, f"❌ Ошибка отправки: {e}\n")
     else:

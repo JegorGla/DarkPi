@@ -10,3 +10,4 @@ netifaces
 pyinstaller
 phonenumbers
 firebase_admin
+bleak

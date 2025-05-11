@@ -16,6 +16,7 @@ from pi_helper_ui import pi_helper_ui
 from rat_ui import create_rat_ui
 from osint_ui import create_osint_ui
 from qr_code_ui import create_qr_code_ui
+from bad_ble import bad_ble_ui
 # from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
@@ -507,6 +508,8 @@ def on_image_click():
         rat_action()
     elif action == "qr_coder_action":
         qr_coder_action()
+    elif action == "bad_ble_action":
+        bad_ble_action()
 
 #========
 def ddos_action():
@@ -635,6 +638,18 @@ def qr_coder_action():
         init_main_ui(content_frame)
 
     create_qr_code_ui(content_frame, go_back_callback=go_back)
+#========
+def bad_ble_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_app_layout()
+        init_main_ui(content_frame)
+
+    bad_ble_ui(content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа

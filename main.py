@@ -66,6 +66,7 @@ slides = [
     {"image": "images/Rat.png", "text": "RAT\nRemote Access Trojan", "action": "rat_action"},
     {"image": "images/BadBLE.png", "text": "BadBLE", "action": "bad_ble_action"},
     {"image": "images/Osint.png", "text": "Osint", "action": "osint_action"},
+    {"image": "images/scheduled-task-configuration.png", "text": "Task\nScheduler", "action": "task_scheduler_action"},
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
     {"image": "images/Folder.png", "text": "See files", "action": "files_action"},
     {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},

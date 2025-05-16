@@ -23,24 +23,20 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
     top_frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
 
     # Нижняя часть (виртуальная клавиатура)
-    bottom_frame = ctk.CTkFrame(container)
-    bottom_frame.pack(side="bottom", fill="x", expand=False, padx=10, pady=10)
+    bottom_frame = ctk.CTkFrame(container, height=300)
+    bottom_frame.pack_propagate(False)  # чтобы высота сохранялась при скрытии
 
     # Левая часть (ввод данных)
     left_frame = ctk.CTkFrame(top_frame, width=300)
     left_frame.pack(side="left", fill="y", padx=(0, 10), pady=10)
 
-    # Правая часть (разделена на верхнюю и нижнюю)
+    # Правая часть (результаты)
     right_frame = ctk.CTkFrame(top_frame)
     right_frame.pack(side="left", fill="both", expand=True, pady=10)
 
     # Верхняя часть правой части (TextBox для результатов)
     top_right_frame = ctk.CTkFrame(right_frame)
     top_right_frame.pack(side="top", fill="both", expand=True, pady=10)
-
-    # Нижняя часть правой части (виртуальная клавиатура)
-    bottom_right_frame = ctk.CTkFrame(right_frame)
-    bottom_right_frame.pack(side="bottom", fill="x", pady=10)
 
     # Заголовок
     label_title = ctk.CTkLabel(left_frame, text="Nmap Port Scanner", font=("Arial", 24))
@@ -102,12 +98,13 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
     active_entry = None
 
     def set_target_entry(entry, name):
+        nonlocal active_entry
+        active_entry = entry
         keyboard.target_entry = entry
         #print(f"[DEBUG] Активное поле ввода: {name}")
 
-    # Функции для обработки ввода с клавиатуры
+    # Функция обработки нажатия с виртуальной клавиатуры
     def on_key_pressed(key):
-        """Функция для обработки нажатия клавиш на виртуальной клавиатуре."""
         if active_entry:
             current = active_entry.get()
             active_entry.delete(0, ctk.END)
@@ -115,7 +112,6 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
 
     def run_scan():
         text_result.delete("1.0", "end")
-        """Функция для запуска сканирования."""
         target = entry_target.get()
         ports = entry_ports.get()
 
@@ -124,7 +120,6 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
             return
 
         current_time = time.strftime("%H:%M:%S", time.localtime())
-
         scanner = nmap.PortScanner()
 
         try:
@@ -149,21 +144,72 @@ def nmap_scan_ui(parent_frame, go_back_callback=None):
             text_result.insert("end", f"Error: {str(e)}\n")
 
     def save_results():
-        # Проверяем, существует ли папка results
         if not os.path.exists("results"):
-            os.makedirs("results")  # создаём папку, если её нет
-
-        # Теперь сохраняем файл
-        with open(f"results/{entry_target.get()}_scan_results.txt", "w") as file:
+            os.makedirs("results")
+        filename = f"results/{entry_target.get()}_scan_results.txt"
+        with open(filename, "w") as file:
             file.write(text_result.get("1.0", "end"))
 
-    # Виртуальная клавиатура
-    keyboard = NumericKeyboard(bottom_right_frame, entry_target)
-    
-    # Привязка клавиатуры к полям
-    entry_target.bind("<FocusIn>", lambda event: set_target_entry(entry_target, "Target (IP/Domain)"))
-    entry_ports.bind("<FocusIn>", lambda event: set_target_entry(entry_ports, "Ports"))
-    
+    # Виртуальная клавиатура в нижнем фрейме
+    keyboard = NumericKeyboard(bottom_frame, entry_target)
 
-# В этом примере, когда вы щелкаете на поле ввода, оно становится активным. 
-# Виртуальная клавиатура будет вставлять символы в это активное поле.
+    # Привязка клавиатуры к полям ввода
+    entry_target.bind("<FocusIn>", lambda e: [set_target_entry(entry_target, "Target (IP/Domain)"), show_keyboard()])
+    entry_ports.bind("<FocusIn>", lambda e: [set_target_entry(entry_ports, "Ports"), show_keyboard()])
+
+    # Кнопка-панель для вызова клавиатуры
+    keyboard_toggle_frame = ctk.CTkFrame(container, height=40)
+    keyboard_toggle_frame.pack(side="bottom", fill="x")
+
+    keyboard_visible = False
+
+    def slide_keyboard(target_y, step=10):
+        parent_frame.update()
+        container_width = container.winfo_width()
+        x_pos = (container_width - keyboard_width) // 2
+
+        current_y = bottom_frame.winfo_y()
+        if abs(current_y - target_y) < step:
+            bottom_frame.place_configure(x=x_pos, y=target_y, width=keyboard_width, height=keyboard_height)
+            return
+        direction = 1 if target_y > current_y else -1
+        next_y = current_y + direction * step
+        bottom_frame.place_configure(x=x_pos, y=next_y, width=keyboard_width, height=keyboard_height)
+        parent_frame.after(10, lambda: slide_keyboard(target_y, step))
+
+
+    def show_keyboard():
+        nonlocal keyboard_visible
+        if keyboard_visible:
+            return
+        keyboard_visible = True
+        slide_keyboard(target_y=parent_frame.winfo_height() - 300)
+
+    def hide_keyboard():
+        nonlocal keyboard_visible
+        if not keyboard_visible:
+            return
+        keyboard_visible = False
+        slide_keyboard(target_y=parent_frame.winfo_height())
+
+    def toggle_keyboard():
+        if keyboard_visible:
+            hide_keyboard()
+        else:
+            show_keyboard()
+
+    toggle_button = ctk.CTkButton(keyboard_toggle_frame, text="⌨ Клавиатура", command=toggle_keyboard)
+    toggle_button.pack(pady=5)
+
+    # Изначально клавиатура скрыта (сдвигаем за пределы контейнера)
+    keyboard_width = 750
+    keyboard_height = 300
+
+    def place_keyboard_at(y_pos):
+        parent_frame.update()
+        container_width = container.winfo_width()
+        x_pos = (container_width - keyboard_width) // 2
+        bottom_frame.place(in_=container, x=x_pos, y=y_pos, width=keyboard_width, height=keyboard_height)
+
+    # Изначально скрываем клавиатуру
+    place_keyboard_at(parent_frame.winfo_height())

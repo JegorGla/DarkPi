@@ -11,13 +11,14 @@ def clear_frame(frame):
 
 selected_timeout = None  # Глобальная переменная для хранения значения времени
 selected_edition = None  # Глобальная переменная для хранения выбранной редакции
-
+fullscreen = None
 
 def create_default_settings():
     """Создание файла с настройками по умолчанию."""
     default_settings = {
         "timeout": "5 seconds",
-        "edition": "Normal edition"
+        "edition": "Normal edition",
+        "fullscreen": "Yes"
     }
     try:
         with open("settings.json", "w") as f:
@@ -28,28 +29,29 @@ def create_default_settings():
 
 
 def load_timeout_setting():
-    """Загрузка сохраненных настроек из файла JSON."""
-    global selected_timeout, selected_edition
+    global selected_timeout, selected_edition, fullscreen
     if os.path.exists("settings.json"):
         try:
             with open("settings.json", "r") as f:
                 data = json.load(f)
                 selected_timeout = data.get("timeout", None)
                 selected_edition = data.get("edition", None)
-                print(f"[INFO] Loaded settings: timeout={selected_timeout}, edition={selected_edition}")
+                fullscreen = data.get("fullscreen", "No")  # по умолчанию No
+                print(f"[INFO] Loaded settings: timeout={selected_timeout}, edition={selected_edition}, fullscreen={fullscreen}")
         except (json.JSONDecodeError, KeyError):
             selected_timeout = None
             selected_edition = None
-            print("[WARNING] Failed to parse settings.json, setting values to None")
+            fullscreen = "No"
+            print("[WARNING] Failed to parse settings.json, setting values to defaults")
     else:
         print("[WARNING] settings.json not found, creating default settings...")
         create_default_settings()
         selected_timeout = "5 seconds"
         selected_edition = "Normal edition"
-
+        fullscreen = "No"
 
 def save_timeout_setting():
-    """Обновляет настройки в settings.json без потери других данных."""
+    global selected_timeout, selected_edition, fullscreen_var
     if selected_timeout and selected_edition:
         try:
             settings = {}
@@ -57,14 +59,12 @@ def save_timeout_setting():
                 with open("settings.json", "r") as f:
                     try:
                         settings = json.load(f)
-                        print(f"[DEBUG] Loaded existing settings for update: {settings}")
                     except json.JSONDecodeError:
-                        print("[WARNING] settings.json was corrupted. Overwriting with new settings.")
                         settings = {}
 
-            # Обновляем только нужные поля
             settings["timeout"] = selected_timeout
             settings["edition"] = selected_edition
+            settings["fullscreen"] = "Yes" if fullscreen_var.get() else "No"
 
             with open("settings.json", "w") as f:
                 json.dump(settings, f, indent=4)
@@ -80,9 +80,19 @@ def set_gif_timeout(event=None):
     print(f"[DEBUG] New timeout selected: {selected_timeout}")
     save_timeout_setting()
 
+def get_fullscreen_value():
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            return data.get("fullscreen", "No") == "Yes"
+    except:
+        return False  # по умолчанию выключено
+
+
 def init_settings_ui(parent_frame, go_back_callback):
     """Функция для инициализации UI настроек."""
     clear_frame(parent_frame)
+    
 
     def set_edition(event=None):
         """Функция для обработки выбранной редакции."""
@@ -154,6 +164,17 @@ def init_settings_ui(parent_frame, go_back_callback):
     edition_combo.place(relx=0.5, rely=0.7, anchor="center", relwidth=0.9)
     edition_combo.set(selected_edition if selected_edition else "Select edition")
     edition_combo.bind("<<ComboboxSelected>>", set_edition)
+
+    global fullscreen_var
+    fullscreen_var = ctk.BooleanVar(value=get_fullscreen_value())
+    fullscreen_check_box = ctk.CTkCheckBox(
+        parent_frame,
+        text="Fullscreen",
+        variable=fullscreen_var,
+        command=save_timeout_setting  # сохраняем при изменении
+    )
+    fullscreen_check_box.place(relx=0.5, rely=0.8, anchor="center", relwidth=0.9)
+        
 
 # Загружаем сохранённую настройку при запуске
 load_timeout_setting()

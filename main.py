@@ -78,10 +78,15 @@ app = ctk.CTk()
 def dvd_button():
     def on_dvd_click():
         global alowed_gif_animation
-        alowed_gif_animation = False  # Отключаем анимацию GIF
+        alowed_gif_animation = False  # Отключаем анимацию GIF.
+        
+        def go_back():
+            global alowed_swipe
+            alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+            init_main_ui(content_frame)
 
         # Переход в DVD UI с логикой свайпа-назад
-        create_dvd_ui(content_frame, go_back_callback=lambda: init_main_ui(content_frame))
+        create_dvd_ui(content_frame, go_back_callback=go_back)
 
     # Кнопка DVD
     dvd_btn = ctk.CTkButton(app, text="DVD", font=("Arial", 20), command=on_dvd_click, hover_color="#272727", fg_color="#242424", text_color="white")
@@ -594,6 +599,7 @@ def settings_action():
         global alowed_swipe
         alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
         init_main_ui(content_frame)
+        enable_fullscreen(app)
 
     init_settings_ui(content_frame, go_back_callback=go_back)
 #========
@@ -733,6 +739,18 @@ def enable_swipe():
     swipe_enabled = True
     #print("[SWIPE] Свайп снова разрешён")
 
+def enable_fullscreen(app):
+    """Применяет полноэкранный режим к окну в зависимости от настроек."""
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            fullscreen = data.get("fullscreen", "No")
+            app.attributes("-fullscreen", fullscreen == "Yes")
+    except FileNotFoundError:
+        print("[WARNING] settings.json not found — fullscreen not applied.")
+    except Exception as e:
+        print(f"[ERROR] Failed to apply fullscreen setting: {e}")
+
 
 # Привязка событий к окну
 app.bind("<ButtonPress-1>", on_swipe_start)  # Начало свайпа
@@ -745,6 +763,7 @@ exit_btn()  # Кнопка выхода
 init_app_layout()
 update_time()  # Запуск обновления времени
 check_inactivity()  # Запуск проверки бездействия
+enable_fullscreen(app)
 #init_main_ui(content_frame)  # Отображение главного интерфейса
 
 show_greeting(app, callback=lambda: show_loading(callback=lambda: init_main_ui(content_frame)))

@@ -1,5 +1,6 @@
 {
     "ssid": "Orange-7442",
     "timeout": "30 seconds",
-    "edition": "Normal edition"
+    "edition": "Normal edition",
+    "fullscreen": "No"
 }

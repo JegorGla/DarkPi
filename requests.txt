@@ -11,3 +11,4 @@ pyinstaller
 phonenumbers
 firebase_admin
 bleak
+QRCode

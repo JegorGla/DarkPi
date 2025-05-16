@@ -21,7 +21,7 @@ def connect_to_ble_ui(parent_frame, go_back_callback=None):
 
     addr_entry = ctk.CTkEntry(parent_frame, placeholder_text="Введите BLE-адрес", width=400)
     addr_entry.pack(pady=10)
-
+ 
     output_box = ctk.CTkTextbox(parent_frame, width=500, height=250)
     output_box.pack(pady=10)
     output_box.configure(state="disabled")

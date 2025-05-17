@@ -536,15 +536,18 @@ def ddos_action():
 def bruteforce_action():
     global alowed_swipe
     alowed_swipe = False  # Отключаем свайп при заходе
+
     def go_back():
         global alowed_swipe
         alowed_swipe = True
         init_main_ui(content_frame)
+
     init_bruteforce_ui(content_frame, go_back_callback=go_back)
 #=======
 def wifi_action():
     global alowed_swipe
     alowed_swipe = False  # Отключаем свайп при заходе
+
     def go_back():
         global alowed_swipe
         alowed_swipe = True
@@ -562,15 +565,16 @@ def network_scan_action():
         init_main_ui(content_frame)
 
     ns_ui(content_frame, go_back_callback=go_back)  # Создаем интерфейс сканирования сети
-
 #=========
 def phishing_action():
     global alowed_swipe
     alowed_swipe = False  # Отключаем свайп при заходе
+
     def go_back():
         global alowed_swipe
         alowed_swipe = True
         init_main_ui(content_frame)
+        
     create_main_phishing_ui(content_frame, go_back_callback=go_back)
 #==========
 
@@ -665,7 +669,7 @@ def bad_ble_action():
 def site_scan_action():
     global alowed_swipe
     alowed_swipe = False
-    
+
     def go_back():
         global alowed_swipe
         alowed_swipe = True

@@ -1,6 +1,8 @@
 import customtkinter as ctk
 import platform
 
+from ScanSite.nslookup import nslookup_ui
+
 def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
@@ -15,7 +17,7 @@ def scan_site_ui(parent_frame, go_back_callback=None):
     button_frame.pack(pady=10)
 
     # Общие инструменты (подходят и для Windows)
-    ctk.CTkButton(button_frame, text="nslookup").pack(pady=5, padx=20)
+    ctk.CTkButton(button_frame, text="nslookup", command=lambda: nslookup_ui(parent_frame, go_back_callback)).pack(pady=5, padx=20)
     ctk.CTkButton(button_frame, text="traceroute / tracert").pack(pady=5, padx=20)
 
     # Инструменты только для Linux/macOS

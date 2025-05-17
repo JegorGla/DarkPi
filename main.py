@@ -17,6 +17,7 @@ from rat_ui import create_rat_ui
 from osint_ui import create_osint_ui
 from qr_code_ui import create_qr_code_ui
 from bad_ble import bad_ble_ui
+from scan_site_ui import scan_site_ui
 # from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
@@ -58,7 +59,7 @@ slides = [
     {"image": "images/DDoS_image.png", "text": "DDOS attack\n (site test)", "action": "ddos_action"},
     {"image": "images/Wifi.png", "text": "Wifi", "action": "wifi_action"},
     {"image": "images/NetworkScan.png", "text": "Network Scan", "action": "network_scan_action"},
-    {"image": "images/Site_Scan.png", "text": "Site Scan", "action": "site_scan_action"},
+    {"image": "images/site_scan.png", "text": "Site Scan", "action": "site_scan_action"},
     {"image": "images/Qr_code_gen.png", "text": "QRCode Generation", "action": "qr_coder_action"},
     {"image": "images/EvilAP.png", "text": "EvilAp", "action": "evilap_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
@@ -82,8 +83,9 @@ def dvd_button():
         alowed_gif_animation = False  # Отключаем анимацию GIF.
         
         def go_back():
-            global alowed_swipe
+            global alowed_swipe, alowed_gif_animation
             alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+            alowed_gif_animation = True
             init_main_ui(content_frame)
 
         # Переход в DVD UI с логикой свайпа-назад
@@ -516,6 +518,8 @@ def on_image_click():
         qr_coder_action()
     elif action == "bad_ble_action":
         bad_ble_action()
+    elif action == "site_scan_action":
+        site_scan_action()
 
 #========
 def ddos_action():
@@ -657,6 +661,17 @@ def bad_ble_action():
         init_main_ui(content_frame)
 
     bad_ble_ui(content_frame, go_back_callback=go_back)
+#=========
+def site_scan_action():
+    global alowed_swipe
+    alowed_swipe = False
+    
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True
+        init_app_layout()
+        init_main_ui(content_frame)
+    scan_site_ui(content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа

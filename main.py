@@ -9,7 +9,7 @@ from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 from greeting import show_greeting  # Импортируем функцию показа приветствия
 from DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
-from settings_ui import init_settings_ui, selected_timeout  # Импортируем функцию создания настроек и выбранное время
+from settings_ui import init_settings_ui, selected_timeout, should_check_update, update_last_check_time  # Импортируем функцию создания настроек и выбранное время
 from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
 from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
 from pi_helper_ui import pi_helper_ui
@@ -18,15 +18,18 @@ from osint_ui import create_osint_ui
 from qr_code_ui import create_qr_code_ui
 from bad_ble import bad_ble_ui
 from scan_site_ui import scan_site_ui
-# from setup import setup  # Импортируем функцию настройки
+from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
 import logging
 import json
 import os
+from datetime import datetime
 #====================================================================
-
+if should_check_update():
+    setup()
+    update_last_check_time()
 
 #=============================Пременные=============================
 time_label = None

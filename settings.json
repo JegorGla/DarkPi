@@ -2,5 +2,7 @@
     "ssid": "Orange-7442",
     "timeout": "30 seconds",
     "edition": "Normal edition",
-    "fullscreen": "No"
+    "fullscreen": "No",
+    "last_update_check": "2025-05-19",
+    "Time to check update": "1 day"
 }

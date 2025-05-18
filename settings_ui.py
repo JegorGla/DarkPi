@@ -1,6 +1,7 @@
 import json
 import customtkinter as ctk
 import os
+from datetime import datetime, timedelta
 
 from settings.about_device import about_device_ui  # Импортируем функцию очистки фрейма из about_device.py
 
@@ -12,13 +13,15 @@ def clear_frame(frame):
 selected_timeout = None  # Глобальная переменная для хранения значения времени
 selected_edition = None  # Глобальная переменная для хранения выбранной редакции
 fullscreen = None
+selected_check_update = None
 
 def create_default_settings():
     """Создание файла с настройками по умолчанию."""
     default_settings = {
         "timeout": "5 seconds",
         "edition": "Normal edition",
-        "fullscreen": "Yes"
+        "fullscreen": "Yes",
+        "Time to check update": "1 day"
     }
     try:
         with open("settings.json", "w") as f:
@@ -29,7 +32,7 @@ def create_default_settings():
 
 
 def load_timeout_setting():
-    global selected_timeout, selected_edition, fullscreen
+    global selected_timeout, selected_edition, fullscreen, selected_check_update
     if os.path.exists("settings.json"):
         try:
             with open("settings.json", "r") as f:
@@ -37,11 +40,13 @@ def load_timeout_setting():
                 selected_timeout = data.get("timeout", None)
                 selected_edition = data.get("edition", None)
                 fullscreen = data.get("fullscreen", "No")  # по умолчанию No
+                selected_check_update = data.get("Time to check update", "1 day")
                 print(f"[INFO] Loaded settings: timeout={selected_timeout}, edition={selected_edition}, fullscreen={fullscreen}")
         except (json.JSONDecodeError, KeyError):
             selected_timeout = None
             selected_edition = None
             fullscreen = "No"
+            selected_check_update = "Never"
             print("[WARNING] Failed to parse settings.json, setting values to defaults")
     else:
         print("[WARNING] settings.json not found, creating default settings...")
@@ -49,9 +54,59 @@ def load_timeout_setting():
         selected_timeout = "5 seconds"
         selected_edition = "Normal edition"
         fullscreen = "No"
+        selected_check_update = "1 day"
+
+def update_last_check_time():
+    """Сохраняем дату последней проверки обновлений."""
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+    except:
+        data = {}
+
+    data["last_update_check"] = datetime.now().strftime("%Y-%m-%d")
+
+    with open("settings.json", "w") as f:
+        json.dump(data, f, indent=4)
+    print("[INFO] Обновлена дата последней проверки обновлений")
+
+def should_check_update():
+    """Возвращает True, если пора запустить setup() на основе интервала из настроек."""
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+    except:
+        print("[INFO] Не удалось прочитать settings.json, запускаем setup по умолчанию.")
+        return True  # если нет файла — запускаем setup
+
+    interval = data.get("Time to check update", "1 day").lower().strip()
+    last_check = data.get("last_update_check")
+
+    # если никогда не запускали setup — запускаем
+    if not last_check:
+        return True
+
+    try:
+        last_date = datetime.strptime(last_check, "%Y-%m-%d")
+    except ValueError:
+        return True  # неправильная дата — обновляем
+
+    days_map = {
+        "1 day": 1,
+        "5 day": 5,
+        "1 month": 30,
+        "1 year": 365,
+        "never": float("inf"),
+    }
+
+    days = days_map.get(interval, 1)  # по умолчанию 1 день
+
+    due = datetime.now() - last_date >= timedelta(days=days)
+    print(f"[INFO] Проверка обновлений: прошло {datetime.now() - last_date}. Надо запускать? {due}")
+    return due
 
 def save_timeout_setting():
-    global selected_timeout, selected_edition, fullscreen_var
+    global selected_timeout, selected_edition, fullscreen_var, selected_check_update
     if selected_timeout and selected_edition:
         try:
             settings = {}
@@ -65,6 +120,7 @@ def save_timeout_setting():
             settings["timeout"] = selected_timeout
             settings["edition"] = selected_edition
             settings["fullscreen"] = "Yes" if fullscreen_var.get() else "No"
+            settings["Time to check update"] = selected_check_update  # ✅ правильный ключ
 
             with open("settings.json", "w") as f:
                 json.dump(settings, f, indent=4)
@@ -72,6 +128,7 @@ def save_timeout_setting():
             print(f"[INFO] Settings saved successfully: {settings}")
         except Exception as e:
             print(f"[ERROR] Error saving settings: {e}")
+
 
 def set_gif_timeout(event=None):
     """Функция для обработки выбранного времени без задержки."""
@@ -85,6 +142,14 @@ def get_fullscreen_value():
         with open("settings.json", "r") as f:
             data = json.load(f)
             return data.get("fullscreen", "No") == "Yes"
+    except:
+        return False  # по умолчанию выключено
+    
+def get_time_to_check_update():
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            return data.get("Time to check update", "1 day")
     except:
         return False  # по умолчанию выключено
 
@@ -101,6 +166,11 @@ def init_settings_ui(parent_frame, go_back_callback):
         print(f"[DEBUG] New edition selected: {selected_edition}")
         save_timeout_setting()
 
+    def set_update_check_interval(event=None):
+        global selected_check_update
+        selected_check_update = update_checker_combo.get()
+        print(f"[DEBUG] Update check interval: {selected_check_update}")
+        save_timeout_setting()
 
     # Заголовок
     title = ctk.CTkLabel(parent_frame, text="Settings", font=("Arial", 24))
@@ -108,11 +178,13 @@ def init_settings_ui(parent_frame, go_back_callback):
 
     # Кнопка "Назад"
     def go_back():
-        global selected_timeout, selected_edition
+        global selected_timeout, selected_edition, selected_check_update
         selected_timeout = timeout_combo.get()
-        selected_edition = edition_combo.get()  # Сначала обновляем всё
-        save_timeout_setting()                  # Потом сохраняем
+        selected_edition = edition_combo.get()
+        selected_check_update = update_checker_combo.get()
+        save_timeout_setting()
         go_back_callback()
+
 
 
     back_btn = ctk.CTkButton(parent_frame, text="← Back", command=go_back)
@@ -155,13 +227,24 @@ def init_settings_ui(parent_frame, go_back_callback):
     timeout_combo.set(selected_timeout if selected_timeout else "Select timeout")
     timeout_combo.bind("<<ComboboxSelected>>", set_gif_timeout)
 
+    global update_checker_combo
+    update_checker_combo = ctk.CTkComboBox(
+        parent_frame,
+        values=["1 day", "5 day", "1 month", "1 year", "Never"],
+        font=("Arial", 16), 
+        state="readonly"
+    )
+    update_checker_combo.place(relx=0.5, rely=0.7, anchor="center", relwidth=0.9)
+    update_checker_combo.set(selected_check_update if selected_check_update else "Select interval")
+    update_checker_combo.bind("<<ComboboxSelected>>", set_update_check_interval)
+
     edition_combo = ctk.CTkComboBox(
         parent_frame, 
         values=["Normal edition", "P Diddy edition"],
         font=("Arial", 16), 
         state="readonly",
     )
-    edition_combo.place(relx=0.5, rely=0.7, anchor="center", relwidth=0.9)
+    edition_combo.place(relx=0.5, rely=0.8, anchor="center", relwidth=0.9)
     edition_combo.set(selected_edition if selected_edition else "Select edition")
     edition_combo.bind("<<ComboboxSelected>>", set_edition)
 
@@ -173,7 +256,7 @@ def init_settings_ui(parent_frame, go_back_callback):
         variable=fullscreen_var,
         command=save_timeout_setting  # сохраняем при изменении
     )
-    fullscreen_check_box.place(relx=0.5, rely=0.8, anchor="center", relwidth=0.9)
+    fullscreen_check_box.place(relx=0.5, rely=0.9, anchor="center", relwidth=0.9)
         
 
 # Загружаем сохранённую настройку при запуске

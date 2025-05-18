@@ -1,3 +1,7 @@
+if should_check_update():
+    setup()
+    update_last_check_time()
+
 #=============================Импортируем библиотеки=============================
 import customtkinter as ctk
 from PIL import Image, ImageTk, ImageSequence
@@ -27,9 +31,7 @@ import json
 import os
 from datetime import datetime
 #====================================================================
-if should_check_update():
-    setup()
-    update_last_check_time()
+
 
 #=============================Пременные=============================
 time_label = None

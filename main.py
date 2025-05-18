@@ -1,3 +1,6 @@
+from setup import setup  # Импортируем функцию настройки
+from settings_ui import should_check_update, update_last_check_time
+
 if should_check_update():
     setup()
     update_last_check_time()
@@ -22,7 +25,6 @@ from osint_ui import create_osint_ui
 from qr_code_ui import create_qr_code_ui
 from bad_ble import bad_ble_ui
 from scan_site_ui import scan_site_ui
-from setup import setup  # Импортируем функцию настройки
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi

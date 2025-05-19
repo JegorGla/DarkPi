@@ -16,6 +16,7 @@ def countdown(seconds=5):
         time.sleep(1)
         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
             if sys.stdin.read(1).lower() == 's':
+                print("Нажато s!")
                 if platform.system() != "Windows":
                     subprocess.run('echo -e "\\033[31m$(figlet -f slant -c CANCELED)\\033[0m"', shell=True)
                 else:
@@ -44,8 +45,11 @@ def install_linux_package():
 
 def install_python_package(file_path):
     """Установить Python-зависимости из файла."""
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", file_path])
-
+    if platform.system() == "Windows":
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", file_path])
+    elif platform.system() == "Linux":
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", file_path, "--break-system-package"])
+        
 def install_requirements():
     """Установить зависимости из requirements.txt."""
     try:

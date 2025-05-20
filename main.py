@@ -1,6 +1,5 @@
 from setup import setup  # Импортируем функцию настройки
-from settings_ui import should_check_update, update_last_check_time
-
+from date_time_config import *
 if should_check_update():
     setup()
     update_last_check_time()
@@ -16,7 +15,7 @@ from bruteforce_ui import init_bruteforce_ui
 from game_ui import init_game_ui  # Импортируем функцию создания меню игр
 from greeting import show_greeting  # Импортируем функцию показа приветствия
 from DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
-from settings_ui import init_settings_ui, selected_timeout, should_check_update, update_last_check_time  # Импортируем функцию создания настроек и выбранное время
+from settings_ui import init_settings_ui, selected_timeout  # Импортируем функцию создания настроек и выбранное время
 from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
 from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
 from pi_helper_ui import pi_helper_ui

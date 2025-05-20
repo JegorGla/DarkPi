@@ -56,6 +56,7 @@ def install_requirements():
         install_python_package("requests.txt")
         if platform.system() != "Windows":
             subprocess.check_call(["figlet", "-f", "slant", "-c", "DONE", "|", "lolcat"])
+            time.sleep(3)
         else:
             print("[INFO] Python-зависимости успешно установлены.")
             time.sleep(3)

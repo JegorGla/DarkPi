@@ -126,13 +126,31 @@ def get_ip_proxy_from_file():
     try:
         with open("settings.json", "r", encoding="utf-8") as f:
             settings = json.load(f)
-        interval_str = settings.get("proxy_rechoice_interval", "10")  # строка
-        interval = int(interval_str)
+        interval_obj = settings.get("proxy_rechoice_interval", {"value": 10, "unit": "minutes"})
+
+        # Проверяем что interval_obj - словарь с нужными ключами
+        if isinstance(interval_obj, dict):
+            value = int(interval_obj.get("value", 10))
+            unit = interval_obj.get("unit", "minutes").lower()
+
+            if unit == "minutes":
+                interval_seconds = value * 60
+            elif unit == "seconds":
+                interval_seconds = value
+            else:
+                interval_seconds = 10 * 60  # дефолт 10 минут в секундах
+        else:
+            # Если вдруг старый формат (просто число)
+            interval_seconds = int(interval_obj) * 60
+
         use_proxy = settings.get("use_proxy", "No") == "Yes"
     except (FileNotFoundError, ValueError, json.JSONDecodeError):
-        interval = 10
+        interval_seconds = 10 * 60  # дефолт 10 минут в секундах
         use_proxy = False
         settings = {}
+
+    # Отладочная печать: сколько секунд и в каких единицах хранится интервал
+    # print(f"[DEBUG] Proxy rechoice interval: {value} {unit} ({interval_seconds} seconds)")
 
     # Если прокси выключен — скрыть метку и выйти
     if not use_proxy:
@@ -151,14 +169,26 @@ def get_ip_proxy_from_file():
 
     current_time = time.time()
 
+    # Время, оставшееся до следующей смены прокси
+    time_since_update = current_time - last_proxy_update
+    time_left = max(0, interval_seconds - time_since_update)
+
+    # Отладочная печать, сколько осталось до смены прокси
+    if unit == "minutes":
+        pass
+        # print(f"[DEBUG] Next proxy change in approximately: {time_left / 60:.1f} minutes")
+    else:
+        pass
+        # print(f"[DEBUG] Next proxy change in approximately: {time_left:.0f} seconds")
+
     if lines:
-        if current_time - last_proxy_update > interval * 60:  # через N минут
+        if time_since_update > interval_seconds:
             choise_ip = random.choice(lines)
             last_proxy_update = current_time
-            # print(f"[смена] Новый прокси выбран: {choise_ip}")
+            # print(f"[INFO] Proxy changed to: {choise_ip}")
         else:
             pass
-            # print(f"[ожидание] Прокси пока не меняется: {choise_ip}")
+            #print(f"[INFO] Proxy not changed yet: {choise_ip}")
     else:
         choise_ip = "No proxy available"
 
@@ -179,8 +209,7 @@ def get_ip_proxy_from_file():
         #print(f"[ERROR] Ошибка при сохранении settings.json: {e}")
 
     # Повторный вызов каждые 5 секунд
-    app.after(100, get_ip_proxy_from_file)
-
+    app.after(500, get_ip_proxy_from_file)  # можно менять интервал обновления
 
 get_ip_proxy_from_file()
 

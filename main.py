@@ -113,70 +113,74 @@ def dvd_button():
 def IP_Label():
     global ip_label
     if ip_label is None:
-        ip_label = ctk.CTkLabel(app, text=f"IP:{choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="white")
-        ip_label.place(relx=0.63, rely=0.023, anchor="nw")
+        ip_label = ctk.CTkLabel(app, text=f"IP:{choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="#A30031")
+        ip_label.place(relx=0.62, rely=0.023)
     else:
         ip_label.configure(text=f"IP:{choise_ip}")
 
 def get_ip_proxy_from_file():
     global ip_label, choise_ip, last_proxy_update
+    IP_Label()
 
-    # Читаем настройки
+    # Загружаем настройки
     try:
         with open("settings.json", "r", encoding="utf-8") as f:
             settings = json.load(f)
-        interval = int(settings.get("proxy_rechoice_interval", 10))
+        interval_str = settings.get("proxy_rechoice_interval", "10")  # строка
+        interval = int(interval_str)
         use_proxy = settings.get("use_proxy", "No") == "Yes"
     except (FileNotFoundError, ValueError, json.JSONDecodeError):
-        settings = {}
         interval = 10
         use_proxy = False
+        settings = {}
 
-    # Если прокси отключён — скрываем метку
+    # Если прокси выключен — скрыть метку и выйти
     if not use_proxy:
         if ip_label is not None:
             ip_label.destroy()
             ip_label = None
         app.after(1000, get_ip_proxy_from_file)
-        return  # остановим дальнейшую обработку
+        return
 
-    # Получаем список прокси
+    # Загружаем список прокси
     try:
         with open("working_proxies.txt", "r", encoding="utf-8") as f:
             lines = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
-        #print("Файл working_proxies.txt не найден")
         lines = []
 
+    current_time = time.time()
+
     if lines:
-        current_time = time.time()
-        if current_time - last_proxy_update > interval * 60:
+        if current_time - last_proxy_update > interval * 60:  # через N минут
             choise_ip = random.choice(lines)
             last_proxy_update = current_time
-            #print(f"[смена] Новый прокси выбран: {choise_ip}")
+            # print(f"[смена] Новый прокси выбран: {choise_ip}")
         else:
             pass
-            #print(f"[ожидание] Прокси пока не меняется: {choise_ip}")
+            # print(f"[ожидание] Прокси пока не меняется: {choise_ip}")
     else:
         choise_ip = "No proxy available"
 
-    # Показываем или обновляем метку
+    # Обновление или создание метки
     if ip_label is None:
-        ip_label = ctk.CTkLabel(app, text=f"IP:{choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="white")
+        ip_label = ctk.CTkLabel(app, text=f"IP: {choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="white")
         ip_label.place(relx=0.63, rely=0.023, anchor="nw")
     else:
-        ip_label.configure(text=f"IP:{choise_ip}")
+        ip_label.configure(text=f"IP: {choise_ip}")
 
-    # Обновляем current_proxy в settings.json
+    # Обновление JSON
     settings["current_proxy"] = choise_ip
     try:
         with open("settings.json", "w", encoding="utf-8") as f:
             json.dump(settings, f, indent=4, ensure_ascii=False)
     except Exception as e:
         pass
-        #print(f"Ошибка при сохранении settings.json: {e}")
+        #print(f"[ERROR] Ошибка при сохранении settings.json: {e}")
 
-    app.after(100, get_ip_proxy_from_file)  # Повторяем каждые 1 сек.
+    # Повторный вызов каждые 5 секунд
+    app.after(100, get_ip_proxy_from_file)
+
 
 get_ip_proxy_from_file()
 

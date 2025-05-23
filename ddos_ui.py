@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from DDOS.slowloris_ui import slowloris_ui  # Импорт интерфейса Slowloris
+import platform
 
 # Функция для очистки всех виджетов в фрейме
 def clear_frame(frame):
@@ -66,6 +67,24 @@ def create_ddos_ui(parent_frame, go_back_callback=None):
     )
     slowloris_button.place(relx=0.5, rely=0.4, anchor="center")
 
+    OR = ctk.CTkLabel(parent_frame, text="OR", font=("Arial", 16), text_color="#FFFFFF")
+    OR.place(relx=0.5, rely=0.45, anchor="center")
+
+    install_btn = ctk.CTkButton(
+        parent_frame,
+        text="Install Linux dos tools",
+        fg_color=default_color,
+        border_color="#8d33ff",
+        hover_color=None,
+        border_width=2,
+        font=("Arial", 16),
+        command=lambda: print("Slowloris Installation Initiated"),
+        width=parent_frame.winfo_width() * 0.7,
+        height=40
+    )
+    install_btn.place(relx=0.5, rely=0.55, anchor="center")
+    
+    install_btn.bind("<Enter>", lambda e: smooth_color_transition(install_btn, default_color, hover_color))
     slowloris_button.bind("<Enter>", lambda e: smooth_color_transition(slowloris_button, default_color, hover_color))
     slowloris_button.bind("<Leave>", lambda e: smooth_color_transition(slowloris_button, hover_color, default_color))
 

@@ -24,6 +24,7 @@ from osint_ui import create_osint_ui
 from qr_code_ui import create_qr_code_ui
 from bad_ble import bad_ble_ui
 from scan_site_ui import scan_site_ui
+from proxy_ui import create_proxy_ui
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
@@ -31,6 +32,7 @@ import logging
 import json
 import os
 from datetime import datetime
+import random
 #====================================================================
 
 
@@ -55,6 +57,9 @@ current_edition = None
 image_button_current = None
 image_button_next = None
 
+last_proxy_update = 0  # глобальное время последнего обновления
+ip_label = None
+
 start_x = 0  # Начальная позиция свайпа
 #===================================================================
 
@@ -76,6 +81,7 @@ slides = [
     {"image": "images/scheduled-task-configuration.png", "text": "Task\nScheduler", "action": "task_scheduler_action"},
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
     {"image": "images/Folder.png", "text": "See files", "action": "files_action"},
+    {"image": "images/Proxy.png", "text": "Proxy", "action": "proxy_action"},
     {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
     {"image": "images/pi_helper.png", "text": "Pi-helper", "action": "pi_helper_action"}
 ]
@@ -100,6 +106,58 @@ def dvd_button():
     # Кнопка DVD
     dvd_btn = ctk.CTkButton(app, text="DVD", font=("Arial", 20), command=on_dvd_click, hover_color="#272727", fg_color="#242424", text_color="white")
     dvd_btn.place(relx=0, rely=0, x=10, y=10, anchor="nw")
+
+def IP_Label():
+    global ip_label
+    ip_label = ctk.CTkLabel(app, text=f"IP:{choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="white")
+    ip_label.place(relx=0.63, rely=0.023, anchor="nw")
+
+def get_ip_proxy_from_file():
+    global ip_label, choise_ip, last_proxy_update
+
+    # Читаем настройки
+    try:
+        with open("settings.json", "r", encoding="utf-8") as f:
+            settings = json.load(f)
+        interval = int(settings.get("proxy_rechoice_interval", 10))
+    except (FileNotFoundError, ValueError, json.JSONDecodeError):
+        settings = {}
+        interval = 10
+
+    # Получаем список прокси
+    try:
+        with open("working_proxies.txt", "r", encoding="utf-8") as f:
+            lines = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        print("Файл working_proxies.txt не найден")
+        lines = []
+
+    if lines:
+        current_time = time.time()
+        if current_time - last_proxy_update > interval * 60:
+            choise_ip = random.choice(lines)
+            last_proxy_update = current_time
+            print(f"[смена] Новый прокси выбран: {choise_ip}")
+        else:
+            print(f"[ожидание] Прокси пока не меняется: {choise_ip}")
+    else:
+        choise_ip = "No proxy available"
+
+    # Обновление Label-а, если он уже создан
+    if ip_label:
+        ip_label.configure(text=f"IP:{choise_ip}")
+
+    # Обновляем current_proxy в settings.json
+    settings["current_proxy"] = choise_ip
+    try:
+        with open("settings.json", "w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Ошибка при сохранении settings.json: {e}")
+
+    app.after(1000, get_ip_proxy_from_file)  # Повторяем каждые 1 сек.
+
+get_ip_proxy_from_file()
 
 def exit_btn():
     def exit_app():
@@ -526,6 +584,8 @@ def on_image_click():
         bad_ble_action()
     elif action == "site_scan_action":
         site_scan_action()
+    elif action == "proxy_action":
+        proxy_action()
 
 #========
 def ddos_action():
@@ -682,6 +742,16 @@ def site_scan_action():
         init_app_layout()
         init_main_ui(content_frame)
     scan_site_ui(content_frame, go_back_callback=go_back)
+#=========
+def proxy_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+    create_proxy_ui(content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа
@@ -783,6 +853,7 @@ app.bind("<ButtonPress-1>", on_swipe_start)  # Начало свайпа
 app.bind("<ButtonRelease-1>", on_swipe_end)  # Конец свайпа
 
 # Инициализация приложения
+IP_Label()  # Отображение IP-адреса
 init_wifi_znak_with_texture(content_frame)
 dvd_button()  # Кнопка DVD
 exit_btn()  # Кнопка выхода

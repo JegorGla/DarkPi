@@ -60,13 +60,23 @@ def check_ip_ui(parent_frame, go_back_callback=None):
     title.place(relx=0.5, rely=0.1, anchor="center")
 
     def fetch_ip():
-        """Функция загрузки IP."""
+        """Функция загрузки IP через прокси."""
+        proxy = load_current_proxy()
+        if not proxy:
+            return "Прокси не найден в settings.json"
+
+        proxies = {
+            "http": f"http://{proxy}",
+            "https": f"http://{proxy}",
+        }
+
         try:
-            response = requests.get("https://api.ipify.org?format=json", timeout=10)
+            response = requests.get("https://api.ipify.org?format=json", proxies=proxies, timeout=10)
             ip_info = response.json()
             return ip_info.get("ip", "Unknown IP")
         except requests.RequestException as e:
-            return f"Error: {e}"
+            return f"Error через прокси: {e}"
+
 
     def on_ip_loaded(ip_address):
         """Отображение IP после загрузки."""
@@ -92,3 +102,12 @@ def check_ip_ui(parent_frame, go_back_callback=None):
     # Показать экран загрузки
     show_loading_screen(parent_frame, message="Loading IP...", fetch_function=fetch_ip, callback=on_ip_loaded)
     current_os = detect_os()
+
+    def load_current_proxy():
+        """Загружает текущий прокси из settings.json."""
+        try:
+            with open("settings.json", "r", encoding="utf-8") as f:
+                settings = json.load(f)
+                return settings.get("current_proxy")
+        except (FileNotFoundError, json.JSONDecodeError):
+            return None

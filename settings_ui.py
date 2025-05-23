@@ -14,6 +14,7 @@ selected_timeout = None  # Глобальная переменная для хр
 selected_edition = None  # Глобальная переменная для хранения выбранной редакции
 fullscreen = None
 selected_check_update = None
+use_proxy = None
 
 def create_default_settings():
     """Создание файла с настройками по умолчанию."""
@@ -21,7 +22,8 @@ def create_default_settings():
         "timeout": "5 seconds",
         "edition": "Normal edition",
         "fullscreen": "Yes",
-        "Time to check update": "1 day"
+        "Time to check update": "1 day",
+        "use_proxy": "Yes"
     }
     try:
         with open("settings.json", "w") as f:
@@ -32,21 +34,23 @@ def create_default_settings():
 
 
 def load_timeout_setting():
-    global selected_timeout, selected_edition, fullscreen, selected_check_update
+    global selected_timeout, selected_edition, fullscreen, selected_check_update, use_proxy
     if os.path.exists("settings.json"):
         try:
             with open("settings.json", "r") as f:
                 data = json.load(f)
-                selected_timeout = data.get("timeout", None)
-                selected_edition = data.get("edition", None)
-                fullscreen = data.get("fullscreen", "No")  # по умолчанию No
-                selected_check_update = data.get("Time to check update", "1 day")
+                selected_timeout = data.get("timeout", "5 seconds")
+                selected_edition = data.get("edition", "Normal edition")
+                fullscreen = data.get("fullscreen", "No")
+                selected_check_update = data.get("update_check_interval", "1 day")
+                use_proxy = data.get("use_proxy", "Yes")
                 print(f"[INFO] Loaded settings: timeout={selected_timeout}, edition={selected_edition}, fullscreen={fullscreen}")
         except (json.JSONDecodeError, KeyError):
             selected_timeout = None
             selected_edition = None
             fullscreen = "No"
             selected_check_update = "Never"
+            use_proxy = "Yes"
             print("[WARNING] Failed to parse settings.json, setting values to defaults")
     else:
         print("[WARNING] settings.json not found, creating default settings...")
@@ -55,9 +59,10 @@ def load_timeout_setting():
         selected_edition = "Normal edition"
         fullscreen = "No"
         selected_check_update = "1 day"
+        use_proxy = "Yes"
 
 def save_timeout_setting():
-    global selected_timeout, selected_edition, fullscreen_var, selected_check_update
+    global selected_timeout, selected_edition, fullscreen_var, selected_check_update, use_proxy
     if selected_timeout and selected_edition:
         try:
             settings = {}
@@ -71,7 +76,9 @@ def save_timeout_setting():
             settings["timeout"] = selected_timeout
             settings["edition"] = selected_edition
             settings["fullscreen"] = "Yes" if fullscreen_var.get() else "No"
-            settings["Time to check update"] = selected_check_update  # ✅ правильный ключ
+            settings["update_check_interval"] = selected_check_update
+            settings["use_proxy"] = "Yes" if use_proxies_var.get() else "No"
+
 
             with open("settings.json", "w") as f:
                 json.dump(settings, f, indent=4)
@@ -104,6 +111,14 @@ def get_time_to_check_update():
     except:
         return False  # по умолчанию выключено
 
+def get_use_proxy_value():
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            return data.get("use_proxy", "Yes") == "Yes"
+    except:
+        return False  # по умолчанию выключено
+
 
 def init_settings_ui(parent_frame, go_back_callback):
     """Функция для инициализации UI настроек."""
@@ -122,6 +137,8 @@ def init_settings_ui(parent_frame, go_back_callback):
         selected_check_update = update_checker_combo.get()
         print(f"[DEBUG] Update check interval: {selected_check_update}")
         save_timeout_setting()
+    
+
 
     # Заголовок
     title = ctk.CTkLabel(parent_frame, text="Settings", font=("Arial", 24))
@@ -129,10 +146,12 @@ def init_settings_ui(parent_frame, go_back_callback):
 
     # Кнопка "Назад"
     def go_back():
-        global selected_timeout, selected_edition, selected_check_update
+        global selected_timeout, selected_edition, selected_check_update, selected_fullscreen, use_proxy
         selected_timeout = timeout_combo.get()
         selected_edition = edition_combo.get()
         selected_check_update = update_checker_combo.get()
+        selected_fullscreen = fullscreen_var.get()
+        use_proxy = use_proxies_var.get()
         save_timeout_setting()
         go_back_callback()
 
@@ -143,13 +162,19 @@ def init_settings_ui(parent_frame, go_back_callback):
 
     # ==== Блок Use Proxies ====  
     setting_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
-    setting_frame.place(relx=0.5, rely=0.25, anchor="center", relwidth=0.9)
+    setting_frame.place(relx=0.54, rely=0.25, anchor="center", relwidth=1)
 
     setting_label = ctk.CTkLabel(setting_frame, text="Use proxies", anchor="w", font=("Arial", 16))
-    setting_label.pack(side="left", fill="x", expand=True)
+    setting_label.pack(side="left", fill="x", expand=True, padx=(10, 0))
 
-    use_proxies_var = ctk.BooleanVar()
-    checkbox = ctk.CTkCheckBox(setting_frame, variable=use_proxies_var, text="")
+    global use_proxies_var
+    use_proxies_var = ctk.BooleanVar(value=get_use_proxy_value())
+    checkbox = ctk.CTkCheckBox(
+        setting_frame,
+        variable=use_proxies_var,
+        text="",
+        command=save_timeout_setting  # сохраняем при изменении
+    )
     checkbox.pack(side="right")
 
     # ==================== About Device ====================
@@ -199,15 +224,25 @@ def init_settings_ui(parent_frame, go_back_callback):
     edition_combo.set(selected_edition if selected_edition else "Select edition")
     edition_combo.bind("<<ComboboxSelected>>", set_edition)
 
+
+    # ==== Блок Fullscreen ====
+    fullscreen_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
+    fullscreen_frame.place(relx=0.54, rely=0.33, anchor="center", relwidth=1)
+
+    fullscreen_label = ctk.CTkLabel(fullscreen_frame, text="Fullscreen", anchor="w", font=("Arial", 16))
+    fullscreen_label.pack(side="left", fill="x", expand=True, padx=(10, 0))
+
+
     global fullscreen_var
     fullscreen_var = ctk.BooleanVar(value=get_fullscreen_value())
     fullscreen_check_box = ctk.CTkCheckBox(
-        parent_frame,
-        text="Fullscreen",
+        fullscreen_frame,
         variable=fullscreen_var,
-        command=save_timeout_setting  # сохраняем при изменении
+        text="",
+        command=save_timeout_setting
     )
-    fullscreen_check_box.place(relx=0.5, rely=0.9, anchor="center", relwidth=0.9)
+    fullscreen_check_box.pack(side="right")
+
         
 
 # Загружаем сохранённую настройку при запуске

@@ -58,7 +58,10 @@ image_button_current = None
 image_button_next = None
 
 last_proxy_update = 0  # глобальное время последнего обновления
+
 ip_label = None
+choise_ip = "N/A"
+last_proxy_update = 0
 
 start_x = 0  # Начальная позиция свайпа
 #===================================================================
@@ -109,8 +112,11 @@ def dvd_button():
 
 def IP_Label():
     global ip_label
-    ip_label = ctk.CTkLabel(app, text=f"IP:{choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="white")
-    ip_label.place(relx=0.63, rely=0.023, anchor="nw")
+    if ip_label is None:
+        ip_label = ctk.CTkLabel(app, text=f"IP:{choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="white")
+        ip_label.place(relx=0.63, rely=0.023, anchor="nw")
+    else:
+        ip_label.configure(text=f"IP:{choise_ip}")
 
 def get_ip_proxy_from_file():
     global ip_label, choise_ip, last_proxy_update
@@ -120,16 +126,26 @@ def get_ip_proxy_from_file():
         with open("settings.json", "r", encoding="utf-8") as f:
             settings = json.load(f)
         interval = int(settings.get("proxy_rechoice_interval", 10))
+        use_proxy = settings.get("use_proxy", "No") == "Yes"
     except (FileNotFoundError, ValueError, json.JSONDecodeError):
         settings = {}
         interval = 10
+        use_proxy = False
+
+    # Если прокси отключён — скрываем метку
+    if not use_proxy:
+        if ip_label is not None:
+            ip_label.destroy()
+            ip_label = None
+        app.after(1000, get_ip_proxy_from_file)
+        return  # остановим дальнейшую обработку
 
     # Получаем список прокси
     try:
         with open("working_proxies.txt", "r", encoding="utf-8") as f:
             lines = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
-        print("Файл working_proxies.txt не найден")
+        #print("Файл working_proxies.txt не найден")
         lines = []
 
     if lines:
@@ -137,14 +153,18 @@ def get_ip_proxy_from_file():
         if current_time - last_proxy_update > interval * 60:
             choise_ip = random.choice(lines)
             last_proxy_update = current_time
-            print(f"[смена] Новый прокси выбран: {choise_ip}")
+            #print(f"[смена] Новый прокси выбран: {choise_ip}")
         else:
-            print(f"[ожидание] Прокси пока не меняется: {choise_ip}")
+            pass
+            #print(f"[ожидание] Прокси пока не меняется: {choise_ip}")
     else:
         choise_ip = "No proxy available"
 
-    # Обновление Label-а, если он уже создан
-    if ip_label:
+    # Показываем или обновляем метку
+    if ip_label is None:
+        ip_label = ctk.CTkLabel(app, text=f"IP:{choise_ip}", font=("Arial", 15), fg_color="#242424", text_color="white")
+        ip_label.place(relx=0.63, rely=0.023, anchor="nw")
+    else:
         ip_label.configure(text=f"IP:{choise_ip}")
 
     # Обновляем current_proxy в settings.json
@@ -153,9 +173,10 @@ def get_ip_proxy_from_file():
         with open("settings.json", "w", encoding="utf-8") as f:
             json.dump(settings, f, indent=4, ensure_ascii=False)
     except Exception as e:
-        print(f"Ошибка при сохранении settings.json: {e}")
+        pass
+        #print(f"Ошибка при сохранении settings.json: {e}")
 
-    app.after(1000, get_ip_proxy_from_file)  # Повторяем каждые 1 сек.
+    app.after(100, get_ip_proxy_from_file)  # Повторяем каждые 1 сек.
 
 get_ip_proxy_from_file()
 
@@ -397,7 +418,7 @@ def show_loading(callback=None):
 def reset_inactivity_timer(event=None):
     global last_activity_time
     last_activity_time = time.time()  # Сброс таймера
-    ##print(last_activity_time)  # Для отладки
+    #print(last_activity_time)  # Для отладки
     hide_gif_animation()  # Останавливаем отображение GIF при активности
 
 def load_timeout_setting():
@@ -853,7 +874,6 @@ app.bind("<ButtonPress-1>", on_swipe_start)  # Начало свайпа
 app.bind("<ButtonRelease-1>", on_swipe_end)  # Конец свайпа
 
 # Инициализация приложения
-IP_Label()  # Отображение IP-адреса
 init_wifi_znak_with_texture(content_frame)
 dvd_button()  # Кнопка DVD
 exit_btn()  # Кнопка выхода

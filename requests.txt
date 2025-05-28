@@ -1,0 +1,14 @@
+customtkinter
+requests
+python-nmap
+flask
+pillow
+pywifi
+tornet
+psutil
+netifaces
+pyinstaller
+phonenumbers
+firebase_admin
+bleak
+QRCode

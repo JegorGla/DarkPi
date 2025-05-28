@@ -1,0 +1,10 @@
+valid: True
+local_format: 096 331 9353
+intl_format: +380963319353
+country_code: 380
+country_name: Ukraine
+location: Ukraine
+carrier: Kyivstar
+line_type: mobile
+timezones: ['Europe/Kyiv']
+

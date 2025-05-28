@@ -1,0 +1,12 @@
+Scanning 192.168.1.23 on ports 1-1000 is started at 19:23:03...
+
+Host: 192.168.1.23 ()
+State: up
+Protocol: tcp
+Port: 80	State: open
+Port: 135	State: open
+Port: 139	State: open
+Port: 445	State: open
+
+Scan complete.
+

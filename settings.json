@@ -1,0 +1,16 @@
+{
+    "ssid": "Orange-7442",
+    "timeout": "5 minutes",
+    "edition": "Normal edition",
+    "fullscreen": "No",
+    "last_update_check": "2025-05-28",
+    "Time to check update": "1 day",
+    "proxy_rechoice_interval": {
+        "value": 10,
+        "unit": "seconds"
+    },
+    "current_proxy": "104.198.113.75:8080",
+    "update_check_interval": "1 day",
+    "use_proxy": "Yes",
+    "theme": "Blackout"
+}

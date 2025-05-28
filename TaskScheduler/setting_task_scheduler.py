@@ -42,10 +42,14 @@ def create_setting_task_scheduler(parent_frame, go_back_callback):
             year_entry.pack_forget()
             month_entry.pack_forget()
             day_entry.pack_forget()
+            hour_entry.pack(pady=10)
+            minute_entry.pack(pady=10)
         else:
             year_entry.pack(pady=5)
             month_entry.pack(pady=5)
             day_entry.pack(pady=5)
+            hour_entry.pack_forget()
+            minute_entry.pack_forget()
 
     is_every_day.configure(command=update_visibility)
 

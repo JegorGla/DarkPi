@@ -1,5 +1,7 @@
 import customtkinter as ctk
 from virtual_keyboard import NumericKeyboard
+import json
+from datetime import datetime
 
 def clear_frame(frame):
     for widget in frame.winfo_children():
@@ -8,30 +10,84 @@ def clear_frame(frame):
 def create_setting_task_scheduler(parent_frame, go_back_callback):
     clear_frame(parent_frame)
 
-    # Поле ввода времени
-    time_entry = ctk.CTkEntry(parent_frame, placeholder_text="Time to run command")
-    time_entry.pack(pady=10)
+    current_year = datetime.now().year
 
     # Комбобокс
     tool = ctk.CTkComboBox(parent_frame, values=["Proxy"])
     tool.pack(pady=10)
 
-    # Чекбокс
+    # Чекбокс "Every day"
     is_every_day = ctk.CTkCheckBox(parent_frame, text="Every day")
     is_every_day.pack(pady=10)
 
-    # Кнопка Назад
+    # ====== Поля для даты и времени ======
+    year_entry = ctk.CTkEntry(parent_frame, placeholder_text="Year")
+    year_entry.insert(0, str(current_year))
+
+    month_entry = ctk.CTkEntry(parent_frame, placeholder_text="Month")
+    day_entry = ctk.CTkEntry(parent_frame, placeholder_text="Day")
+
+    hour_entry = ctk.CTkEntry(parent_frame, placeholder_text="Hour")
+    minute_entry = ctk.CTkEntry(parent_frame, placeholder_text="Minute")
+
+    # Показываем по умолчанию
+    year_entry.pack(pady=5)
+    month_entry.pack(pady=5)
+    day_entry.pack(pady=5)
+    hour_entry.pack(pady=5)
+    minute_entry.pack(pady=5)
+
+    def update_visibility():
+        if is_every_day.get() == 1:
+            year_entry.pack_forget()
+            month_entry.pack_forget()
+            day_entry.pack_forget()
+        else:
+            year_entry.pack(pady=5)
+            month_entry.pack(pady=5)
+            day_entry.pack(pady=5)
+
+    is_every_day.configure(command=update_visibility)
+
+    def save_settings():
+        # Формируем строку времени
+        if is_every_day.get() == 1:
+            time_to_run = f"{hour_entry.get()}:{minute_entry.get()}"
+        else:
+            time_to_run = f"{year_entry.get()}-{month_entry.get()}-{day_entry.get()} {hour_entry.get()}:{minute_entry.get()}"
+
+        # Загружаем текущие настройки, если они есть
+        try:
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            settings = {}
+
+        # Обновляем или добавляем task_scheduler
+        settings["task_scheduler"] = {
+            "tool": tool.get(),
+            "time": time_to_run,
+            "every_day": is_every_day.get() == 1
+        }
+
+        # Перезаписываем файл с обновлёнными данными
+        with open("settings.json", "w") as f:
+            json.dump(settings, f, indent=4)
+
+        print("Settings updated.")
+
+    save_btn = ctk.CTkButton(parent_frame, text="Save settings", command=save_settings)
+    save_btn.pack(pady=10)
+
     back_btn = ctk.CTkButton(parent_frame, command=go_back_callback, text="Back")
     back_btn.pack(pady=10)
 
-    # Рамка для клавиатуры
+    # ====== Встроенная клавиатура ======
     bottom_frame = ctk.CTkFrame(parent_frame, height=300)
     bottom_frame.pack_propagate(False)
 
-    # Инициализация клавиатуры
-    keyboard = NumericKeyboard(bottom_frame, time_entry)
+    keyboard = NumericKeyboard(bottom_frame, hour_entry)  # по умолчанию — на часах
 
-    # Размеры клавиатуры
     keyboard_width = 750
     keyboard_height = 150
     keyboard_visible = False
@@ -73,12 +129,11 @@ def create_setting_task_scheduler(parent_frame, go_back_callback):
         else:
             show_keyboard()
 
-    # Кнопка показа/скрытия клавиатуры
     toggle_button = ctk.CTkButton(parent_frame, text="⌨ Клавиатура", command=toggle_keyboard)
     toggle_button.pack(pady=10)
 
-    # Показ клавиатуры при фокусе
-    time_entry.bind("<FocusIn>", lambda e: show_keyboard())
+    # Подключаем клавиатуру к каждому полю ввода
+    for entry in [year_entry, month_entry, day_entry, hour_entry, minute_entry]:
+        entry.bind("<FocusIn>", lambda e, ent=entry: (keyboard.set_target(ent), show_keyboard()))
 
-    # Изначально скрыта
     place_keyboard_at(parent_frame.winfo_height())

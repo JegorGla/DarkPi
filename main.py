@@ -28,6 +28,7 @@ from proxy_ui import create_proxy_ui
 from task_sheduler import task_sheduler_ui  # Импортируем функцию создания интерфейса планировщика задач
 #-----Task Scheduler----------
 from TaskScheduler.proxy_task import stop_flag
+from TaskScheduler.Proxy import proxy
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
 import pywifi
@@ -38,6 +39,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
 from datetime import datetime
+import datetime
 import random
 #====================================================================
 
@@ -1032,12 +1034,62 @@ def enable_fullscreen(app):
     except Exception as e:
         print(f"[ERROR] Failed to apply fullscreen setting: {e}")
 
-def monitor_theme():
-    apply_theme_from_settings()
-    app.after(100, monitor_theme)  # Проверять тему каждые 100 мс
+def load_scheduler_setting():
+    global task_settings, tool_value, time_value, every_day_value
+    try:
+        with open("settings.json", "r") as f:
+            settings = json.load(f)
 
-# Запускаем мониторинг темы после создания окна
-monitor_theme()
+        # Достаём вложенные значения
+        task_settings = settings.get("task_scheduler", {})
+        tool_value = task_settings.get("tool", "")
+        time_value = task_settings.get("time", "")
+        every_day_value = task_settings.get("every_day", False)
+
+    except FileNotFoundError:
+        print("settings.json not found.")
+    except json.JSONDecodeError:
+        print("Error decoding JSON.")
+
+    app.after(1000, load_scheduler_setting)
+
+def schedule_checker():
+    global task_settings, tool_value, time_value, every_day_value
+
+    now = datetime.datetime.now()
+
+    try:
+        if every_day_value:
+            # Ожидаем формат HH:MM
+            target_time = datetime.datetime.strptime(time_value, "%H:%M").time()
+
+            if now.hour == target_time.hour and now.minute == target_time.minute:
+                run_scheduled_task()
+        else:
+            # Ожидаем формат YYYY-MM-DD HH:MM
+            target_datetime = datetime.datetime.strptime(time_value, "%Y-%m-%d %H:%M")
+
+            if now.strftime("%Y-%m-%d %H:%M") == target_datetime.strftime("%Y-%m-%d %H:%M"):
+                run_scheduled_task()
+
+    except ValueError:
+        print("Неверный формат времени в настройках")
+
+    # Проверяем каждую минуту
+    app.after(60 * 1000, schedule_checker)
+
+def run_scheduled_task():
+    print(f"🚀 Выполняем задачу: {tool_value}")
+    if tool_value == "Proxy":
+        def task():
+            stop_flag = threading.Event()
+            proxy.main(quantity=None, stop_flag=stop_flag)
+
+        thread = threading.Thread(target=task)
+        thread.daemon = True  # завершится с закрытием программы
+        thread.start()
+
+
 
 # Привязка событий к окну
 app.bind("<ButtonPress-1>", on_swipe_start)  # Начало свайпа
@@ -1054,6 +1106,10 @@ enable_fullscreen(app)
 #init_main_ui(content_frame)  # Отображение главного интерфейса
 
 show_greeting(app, callback=lambda: show_loading(callback=lambda: init_main_ui(content_frame)))
+
+load_scheduler_setting()
+load_scheduler_setting()
+schedule_checker()
 
 # ========== Настройки приложения ==========
 app.geometry("800x480")

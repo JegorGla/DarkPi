@@ -9,8 +9,13 @@
         "value": 10,
         "unit": "seconds"
     },
-    "current_proxy": "104.198.113.75:8080",
+    "current_proxy": "72.10.160.94:30493",
     "update_check_interval": "1 day",
     "use_proxy": "Yes",
-    "theme": "Blackout"
+    "theme": "Blackout",
+    "task_scheduler": {
+        "tool": "Proxy",
+        "time": "16:28",
+        "every_day": true
+    }
 }

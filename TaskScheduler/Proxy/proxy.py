@@ -203,3 +203,7 @@ def main(quantity, stop_flag):
 
     print(Fore.GREEN + f"✅ Всего рабочих прокси: {len(load_working_proxies())}")
 
+def run():
+    import threading
+    stop_flag = threading.Event()
+    main(quantity=None, stop_flag=stop_flag)

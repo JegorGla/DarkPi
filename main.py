@@ -26,6 +26,7 @@ from bad_ble import bad_ble_ui
 from scan_site_ui import scan_site_ui
 from proxy_ui import create_proxy_ui
 from task_sheduler import task_sheduler_ui  # Импортируем функцию создания интерфейса планировщика задач
+from terminal_ui import terminal_ui
 #-----Task Scheduler----------
 from TaskScheduler.proxy_task import stop_flag
 from TaskScheduler.Proxy import proxy
@@ -111,6 +112,7 @@ slides = [
     {"image": "images/NetworkScan.png", "text": "Network Scan", "action": "network_scan_action"},
     {"image": "images/site_scan.png", "text": "Site Scan", "action": "site_scan_action"},
     {"image": "images/Qr_code_gen.png", "text": "QRCode Generation", "action": "qr_coder_action"},
+    {"image": "images/Terminal.png", "text":"Terminal", "action": "terminal_action"},
     {"image": "images/EvilAP.png", "text": "EvilAp", "action": "evilap_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
@@ -762,7 +764,8 @@ def on_image_click():
         proxy_action()
     elif action == "task_scheduler_action":
         task_scheduler_action()
-        
+    elif action == "terminal_action":
+        terminal_action()
 #========
 def ddos_action():
     global alowed_swipe
@@ -939,6 +942,17 @@ def task_scheduler_action():
         init_main_ui(content_frame)
     
     task_sheduler_ui(content_frame, go_back_callback=go_back)  # Инициализация интерфейса планировщика задач
+#=========
+def terminal_action():
+    global alowed_swipe
+    alowed_swipe = True
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = False
+        init_main_ui(content_frame)
+
+    terminal_ui(parent_frame=content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа

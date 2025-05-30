@@ -1,8 +1,26 @@
 import customtkinter as ctk
 import subprocess
 import threading
+import os
+import getpass
+import socket
 
 from virtual_keyboard import NormalKeyboard
+
+def get_prompt():
+    user = getpass.getuser()                  # имя пользователя
+    hostname = socket.gethostname()           # имя хоста
+    cwd = os.getcwd()                         # текущая рабочая директория
+
+    # Для красоты показываем ~ вместо полного пути домашней директории
+    home = os.path.expanduser("~")
+    if cwd.startswith(home):
+        cwd_display = "~" + cwd[len(home):]
+    else:
+        cwd_display = cwd
+
+    return f"{user}@{hostname}:{cwd_display}$ "
+
 
 def clear_frame(frame):
     for widget in frame.winfo_children():
@@ -14,7 +32,7 @@ def execute_command():
         return
 
     output_box.configure(state="normal")
-    output_box.insert("end", f">>> {command}\n")
+    output_box.insert("end", get_prompt())
     output_box.configure(state="disabled")
     output_box.see("end")
     command_entry.delete(0, "end")
@@ -39,9 +57,11 @@ def execute_command():
             output_box.see("end")
         finally:
             output_box.configure(state="normal")
-            output_box.insert("end", ">>> ")
+            output_box.insert("end", get_prompt())
             output_box.configure(state="disabled")
             output_box.see("end")
+            command_entry.focus_set()
+
 
     threading.Thread(target=run, daemon=True).start()
 
@@ -54,12 +74,12 @@ def create_normal_terminal_ui(parent_frame, go_back_callback=None):
     global command_entry, output_box
 
     # Output window
-    output_box = ctk.CTkTextbox(main_frame, width=600, height=int(parent_frame.winfo_height() * 0.6))
+    output_box = ctk.CTkTextbox(main_frame, width=600, height=int(parent_frame.winfo_height() * 0.5))
     output_box.pack(padx=10, pady=10)
     output_box.configure(state="disabled")
 
     # Command entry
-    command_entry = ctk.CTkEntry(main_frame, width=600)
+    command_entry = ctk.CTkEntry(main_frame, width=600, text_color="#ffffff", placeholder_text="Input command...")
     command_entry.pack(padx=10, pady=(0, 10))
     command_entry.bind("<Return>", lambda event: execute_command())
 

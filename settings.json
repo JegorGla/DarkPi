@@ -9,7 +9,7 @@
         "value": 10,
         "unit": "seconds"
     },
-    "current_proxy": "161.35.70.249:80",
+    "current_proxy": "45.136.198.40:3128",
     "update_check_interval": "1 day",
     "use_proxy": "Yes",
     "theme": "Blackout",

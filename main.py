@@ -27,6 +27,7 @@ from scan_site_ui import scan_site_ui
 from proxy_ui import create_proxy_ui
 from task_sheduler import task_sheduler_ui  # Импортируем функцию создания интерфейса планировщика задач
 from terminal_ui import terminal_ui
+from virus_ui import create_gallery_ui as create_virus_ui
 #-----Task Scheduler----------
 from TaskScheduler.proxy_task import stop_flag
 from TaskScheduler.Proxy import proxy
@@ -117,7 +118,6 @@ slides = [
     {"image": "images/Virus.png", "text": "Virus", "action": "virus_action"},
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
-    {"image": "images/Rat.png", "text": "RAT\nRemote Access Trojan", "action": "rat_action"},
     {"image": "images/BadBLE.png", "text": "BadBLE", "action": "bad_ble_action"},
     {"image": "images/Osint.png", "text": "Osint", "action": "osint_action"},
     {"image": "images/scheduled-task-configuration.png", "text": "Task\nScheduler", "action": "task_scheduler_action"},
@@ -966,7 +966,7 @@ def virus_action():
         alowed_swipe = False
         init_main_ui(content_frame)
 
-    pass
+    create_virus_ui(content_frame, go_back)
 #===========================================================================
 
 # События свайпа

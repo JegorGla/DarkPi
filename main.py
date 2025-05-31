@@ -767,6 +767,8 @@ def on_image_click():
         task_scheduler_action()
     elif action == "terminal_action":
         terminal_action()
+    elif action == "virus_action":
+        virus_action()
 #========
 def ddos_action():
     global alowed_swipe
@@ -954,6 +956,17 @@ def terminal_action():
         init_main_ui(content_frame)
 
     terminal_ui(parent_frame=content_frame, go_back_callback=go_back)
+#=========
+def virus_action():
+    global alowed_swipe
+    alowed_swipe = True
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = False
+        init_main_ui(content_frame)
+
+    pass
 #===========================================================================
 
 # События свайпа

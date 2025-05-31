@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from RAT.server import server
-from RAT.global_server import server as glb_serv
+from Virus.RAT.server import server
+from Virus.RAT.global_server import server as glb_serv
 
 def clear_frame(frame):
     for widget in frame.winfo_children():

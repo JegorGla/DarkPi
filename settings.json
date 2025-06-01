@@ -3,13 +3,13 @@
     "timeout": "5 minutes",
     "edition": "Normal edition",
     "fullscreen": "No",
-    "last_update_check": "2025-05-31",
+    "last_update_check": "2025-06-01",
     "Time to check update": "1 day",
     "proxy_rechoice_interval": {
         "value": 10,
         "unit": "seconds"
     },
-    "current_proxy": "209.97.150.167:8080",
+    "current_proxy": "139.59.1.14:80",
     "update_check_interval": "1 day",
     "use_proxy": "Yes",
     "theme": "Blackout",

@@ -28,6 +28,8 @@ list_of_command = {
             "chkdsk - проверка диска",
             "shutdown /s - вимкнення комп'ютера",
             "systeminfo - информация про систему",
+            "suckIt --AsName <Name> -o <path> - скачивает файл",
+            "upload <FileName> - выкладывает файл на сервер",
         ],
         "Linux": [
             "gdown <URL> <output_path> - скачивает файл с Google Drive",
@@ -44,7 +46,9 @@ list_of_command = {
             "ps - список запущених процесів",
             "kill <PID> - завершити процес",
             "shutdown - вимкнення системи",
-            "ifconfig - налаштування мережевих інтерфейсов",
+            "ifconfig - налаштування мереже0вих інтерфейсов",
+            "suckIt --AsName <Name> -o <path> - скачивает файл",
+            "upload <FileName> - выкладывает файл на сервер",
         ]
 }
 
@@ -294,6 +298,8 @@ def server(parent_frame, go_back_callback=None):
     command_line = ctk.CTkEntry(top_right_frame, placeholder_text="Enter command...", fg_color="#111111", text_color="#39ff14", placeholder_text_color="#444444")
     command_line.pack(fill="x", padx=5, pady=5)
 
+    # command_line.bind("<Return>", send_command_to_client(command_line, active_client[0], text_box))
+
     send_button = ctk.CTkButton(
         top_right_frame,
         text="📤 Отправить",
@@ -481,15 +487,3 @@ def server(parent_frame, go_back_callback=None):
         height=40
     )
     hamburger_btn.place(relx=0.99, rely=0.1, anchor="ne")
-
-    # if current_OS in list_of_command:
-    #     # Очистить контейнер команд
-    #     for widget in commands_container.winfo_children():
-    #         widget.destroy()
-
-    #     # Добавить команды в commands_container с place
-    #     y_position = 10  # начальная координата Y
-    #     for cmd in list_of_command[current_OS]:
-    #         command_label = ctk.CTkLabel(commands_container, text=cmd)
-    #         command_label.place(x=10, y=y_position)
-    #         y_position += command_label.winfo_reqheight() + 5  # смещение по Y для следующей метки

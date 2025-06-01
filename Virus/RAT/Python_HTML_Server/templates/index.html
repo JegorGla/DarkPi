@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H4ck3r P4n3l</title>
+    <style>
+        body {
+            background-color: black;
+            color: #00FF00;
+            font-family: "Courier New", monospace;
+            text-align: center;
+            overflow: hidden;
+        }
+        
+        /* Глитч-эффект для заголовка */
+        h1 {
+            font-size: 40px;
+            text-shadow: 0px 0px 10px #00FF00;
+            animation: glitch 1s infinite alternate, flicker 2s infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0px 0px 10px #00FF00; }
+            50% { text-shadow: 5px 5px 20px #00FF00; transform: skewX(10deg); }
+            100% { text-shadow: -5px -5px 20px #00FF00; transform: skewX(-10deg); }
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Кнопки с глитч-эффектом */
+        .button {
+            background-color: #00FF00;
+            color: black;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            margin: 10px;
+            border-radius: 5px;
+            transition: 1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button:hover {
+            background-color: black;
+            color: #00FF00;
+            border: 2px solid #00FF00;
+            animation: glitch-btn 0.2s infinite;
+        }
+
+        @keyframes glitch-btn {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-2px, 2px); }
+            50% { transform: translate(2px, -2px); }
+            75% { transform: translate(-2px, -2px); }
+            100% { transform: translate(2px, 2px); }
+        }
+
+        /* Блок для анимации "Матрицы" */
+        .matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            color: #00FF00;
+            font-family: monospace;
+            opacity: 0.3;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Анимация падения символов */
+        @keyframes move {
+            from { transform: translateY(-100vh); opacity: 0; } 
+            50%  { opacity: 1; } /* Символ появляется в середине падения */
+            to   { transform: translateY(100vh); opacity: 0; } /* Исчезает внизу */
+        }
+
+        /* Стиль для падающих символов */
+        .matrix span {
+            position: absolute;
+            top: -10px;
+            left: calc(100% * var(--x)); 
+            font-size: var(--size); /* Разный размер символов */
+            color: var(--color); /* Разные оттенки зеленого */
+            animation: move var(--speed) linear infinite; /* Разная скорость падения */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>H4ck3r P4n3l</h1>
+    
+    <div class="container">
+        <a class="button" href="{{ url_for('application') }}">📂 Просмотр файлов</a>
+        <a class="button" href="{{ url_for('upload_page') }}">⬆️ Загрузить файл</a>
+    </div>
+
+    <!-- Блок для анимации "Матрицы" -->
+    <div class="matrix"></div>
+
+    <script>
+        function createMatrixEffect() {
+            const matrix = document.querySelector(".matrix");
+
+            for (let i = 0; i < 70; i++) { // Количество символов
+                let span = document.createElement("span");
+                span.innerText = String.fromCharCode(33 + Math.random() * 93); // Случайный ASCII символ
+
+                // Устанавливаем случайные параметры
+                span.style.setProperty("--x", Math.random()); // Случайная позиция по горизонтали
+                span.style.setProperty("--size", 12 + Math.random() * 16 + "px"); // Разный размер
+                span.style.setProperty("--speed", 3 + Math.random() * 3 + "s"); // Разная скорость падения
+                span.style.setProperty("--color", `rgb(0, ${150 + Math.random() * 100}, 0)`); // Разные оттенки зеленого
+
+                matrix.appendChild(span);
+            }
+        }
+
+        createMatrixEffect(); // Запускаем анимацию
+    </script>
+
+</body>
+</html>

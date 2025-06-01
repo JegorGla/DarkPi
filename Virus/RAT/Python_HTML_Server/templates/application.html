@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список файлов</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 50px 0 20px;
+            font-size: 38px;
+            color: #00ff00;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 40px;
+            padding: 40px 20px;
+            justify-items: center;
+            align-items: start;
+            text-align: center;
+        }
+
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 12px;
+            background-color: #2a2a2a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
+            width: 180px;
+            margin-bottom: 10px;
+        }
+
+        .file-item img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 0, 0.7));
+        }
+
+        .file-item p {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            word-wrap: break-word;
+        }
+
+        .file-item a {
+            text-decoration: none;
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 14px;
+            display: block;
+            margin-top: 12px;
+            border: 1px solid #00ff00;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .file-item a:hover {
+            background-color: #00ff00;
+            color: #1e1e1e;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+        }
+
+        .file-item a:active {
+            transform: scale(0.95);
+        }
+
+        .back-button {
+            display: inline-block;
+            margin: 30px auto 50px;
+            padding: 12px 25px;
+            border: 2px solid #00ff00;
+            background-color: black;
+            color: #00ff00;
+            font-family: "Courier New", monospace;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #00ff00;
+            color: black;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        .no-files {
+            color: red;
+            font-size: 20px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Список файлов в папке "Applications"</h1>
+    <div class="file-grid">
+        {% for file in files %}
+            <div class="file-item">
+                {% if file.endswith('.exe') %}
+                    <img src="{{ url_for('static', filename='EXE_ICON.png') }}" alt="EXE File">
+                {% else %}
+                    <img src="{{ url_for('static', filename='file-icon.png') }}" alt="File">
+                {% endif %}
+                <p>{{ file }}</p>
+                <a href="{{ url_for('download_file', filename=file) }}">Скачать</a>
+            </div>
+        {% else %}
+            <p class="no-files">Нет файлов в папке.</p>
+        {% endfor %}
+    </div>
+    <a href="{{ url_for('hello_world') }}" class="back-button">← Назад на главную</a>
+</body>
+</html>

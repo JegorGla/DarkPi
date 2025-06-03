@@ -5,7 +5,7 @@ import struct
 
 # Настройки сервера
 HOST = '0.0.0.0'  # Принимать соединения на всех интерфейсах
-PORT = 3299       # Убедись, что порт совпадает с тем, что ты публикуешь через ngrok/localtonet
+PORT = 12345       # Убедись, что порт совпадает с тем, что ты публикуешь через ngrok/localtonet
 
 def start_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

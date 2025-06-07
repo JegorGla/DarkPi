@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Обновления | H4ck3r P4n3l</title>
+    <style>
+        /* Основной стиль */
+        body {
+            margin: 0;
+            background-color: #000000;
+            color: #00FF00;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            overflow-x: hidden;
+            user-select: none;
+            letter-spacing: 1.5px;
+        }
+
+        /* Заголовок с глитч-эффектом */
+        h1 {
+            font-size: 48px;
+            margin: 40px 0 20px 0;
+            position: relative;
+            color: #00FF00;
+            text-transform: uppercase;
+            animation: flicker 3s infinite;
+            user-select: none;
+        }
+        h1::before,
+        h1::after {
+            content: attr(data-text);
+            position: absolute;
+            left: 0;
+            width: 100%;
+            opacity: 0.8;
+            clip: rect(0, 900px, 0, 0);
+        }
+        h1::before {
+            animation: glitchTop 2s infinite linear alternate-reverse;
+            color: #00ffea;
+            z-index: -1;
+            top: -2px;
+            left: 2px;
+        }
+        h1::after {
+            animation: glitchBottom 1.5s infinite linear alternate-reverse;
+            color: #ff00ff;
+            z-index: -2;
+            top: 2px;
+            left: -2px;
+        }
+
+        @keyframes glitchTop {
+            0% {
+                clip: rect(2px, 9999px, 30px, 0);
+                transform: translate(-3px, 0);
+            }
+            50% {
+                clip: rect(15px, 9999px, 40px, 0);
+                transform: translate(3px, 2px);
+            }
+            100% {
+                clip: rect(5px, 9999px, 25px, 0);
+                transform: translate(-3px, -2px);
+            }
+        }
+        @keyframes glitchBottom {
+            0% {
+                clip: rect(40px, 9999px, 60px, 0);
+                transform: translate(3px, 0);
+            }
+            50% {
+                clip: rect(45px, 9999px, 70px, 0);
+                transform: translate(-3px, 2px);
+            }
+            100% {
+                clip: rect(50px, 9999px, 65px, 0);
+                transform: translate(3px, -2px);
+            }
+        }
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Контейнер списка файлов */
+        .file-list {
+            width: 80%;
+            max-width: 900px;
+            margin: 20px auto 60px auto;
+            background: rgba(0, 255, 0, 0.07);
+            border: 1px solid #00ff00;
+            box-shadow: 0 0 20px #00ff00 inset;
+            border-radius: 8px;
+            padding: 20px 30px;
+            text-align: left;
+            user-select: text;
+        }
+
+        .file-list a {
+            display: block;
+            color: #00ff00;
+            font-size: 20px;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-left: 3px solid transparent;
+            margin: 6px 0;
+            transition: 
+                color 0.5s ease, 
+                background-color 0.5s ease,
+                border-color 0.5s ease,
+                text-shadow 0.5s ease,
+                transform 0.5s ease; /* добавлено */
+            will-change: color, background-color, border-color, text-shadow, transform;
+        }
+
+        .file-list a:hover {
+            background-color: rgba(0, 255, 0, 0.15);
+            border-left: 3px solid #00ffff;
+            color: #00ffff;
+            text-shadow: 0 0 8px #00ffff;
+            cursor: pointer;
+            transform: scale(1.02);
+        }
+
+
+        /* "Матрица" фон */
+        .matrix {
+            pointer-events: none;
+            user-select: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+            font-family: monospace;
+            color: #0f0;
+            overflow: hidden;
+        }
+        .matrix span {
+            position: absolute;
+            font-size: var(--size);
+            left: calc(100% * var(--x));
+            color: var(--color);
+            animation: move var(--speed) linear infinite;
+            user-select: none;
+        }
+        @keyframes move {
+            from { transform: translateY(-100vh); opacity: 0; }
+            50%  { opacity: 1; }
+            to   { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* Сброс стандартных стилей для p при отсутствии файлов */
+        .file-list p {
+            font-size: 18px;
+            color: #004400;
+            font-style: italic;
+            text-align: center;
+            margin: 40px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 data-text="UPDATE">UPDATE</h1>
+
+    <div class="file-list">
+        {% for file in files %}
+            <a href="{{ url_for('downoald_and_update_file', filename=file) }}">🆕 {{ file }}</a>
+        {% else %}
+            <p>Нет доступных обновлений.</p>
+        {% endfor %}
+    </div>
+
+    <div class="matrix"></div>
+
+    <script>
+        function createMatrixEffect() {
+            const matrix = document.querySelector(".matrix");
+            for (let i = 0; i < 70; i++) {
+                let span = document.createElement("span");
+                span.innerText = String.fromCharCode(33 + Math.random() * 93);
+                span.style.setProperty("--x", Math.random());
+                span.style.setProperty("--size", 12 + Math.random() * 16 + "px");
+                span.style.setProperty("--speed", 3 + Math.random() * 3 + "s");
+                span.style.setProperty("--color", `rgb(0, ${150 + Math.random() * 100}, 0)`);
+                matrix.appendChild(span);
+            }
+        }
+        createMatrixEffect();
+    </script>
+</body>
+</html>

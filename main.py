@@ -29,6 +29,7 @@ from Values.task_sheduler import task_sheduler_ui  # Импортируем фу
 from Values.terminal_ui import terminal_ui
 from Values.virus_ui import create_gallery_ui as create_virus_ui
 from Values.exit_Value import exit_values
+from Values.topology_scaned_target import create_topology
 #-----Task Scheduler----------
 from TaskScheduler.proxy_task import stop_flag
 from TaskScheduler.Proxy import proxy
@@ -119,6 +120,7 @@ slides = [
     {"image": "images/Bruteforce.png", "text": "Bruteforce", "action": "bruteforce_action"},
     {"image": "images/Phishing.png", "text": "Phishing", "action": "phishing_action"},
     {"image": "images/BadBLE.png", "text": "BadBLE", "action": "bad_ble_action"},
+    {"image": "images/Scaned_target.png", "text": f"Scaned target\nMap", "action": "scaned_target_action"},
     {"image": "images/Osint.png", "text": "Osint", "action": "osint_action"},
     {"image": "images/scheduled-task-configuration.png", "text": "Task\nScheduler", "action": "task_scheduler_action"},
     {"image": "images/Games.png", "text": "Games", "action": "games_action"},
@@ -776,6 +778,8 @@ def on_image_click():
         terminal_action()
     elif action == "virus_action":
         virus_action()
+    elif action == "scaned_target_action":
+        scaned_target_action()
 #========
 def ddos_action():
     global alowed_swipe
@@ -974,6 +978,17 @@ def virus_action():
         init_main_ui(content_frame)
 
     create_virus_ui(content_frame, go_back)
+#==========
+def scaned_target_action():
+    global alowed_swipe
+    alowed_swipe = True
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = False
+        init_main_ui(content_frame)
+
+    create_topology(content_frame, go_back_callback=go_back)
 #===========================================================================
 
 # События свайпа

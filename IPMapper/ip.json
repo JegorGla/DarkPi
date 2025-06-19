@@ -1,0 +1,83 @@
+{
+  "192.168.1.2": {
+    "country": "Germany",
+    "city": "Berlin",
+    "last_checked": "2025-06-18 12:30",
+    "open_ports": [22, 80, 443],
+    "hostname": "example.de",
+    "os": "Linux"
+  },
+  "192.168.1.3": {
+    "country": "France",
+    "city": "Paris",
+    "last_checked": "2025-06-18 12:35",
+    "open_ports": [3389],
+    "hostname": "host.fr",
+    "os": "Windows Server 2019"
+  },
+  "192.168.1.4": {
+    "country": "USA",
+    "city": "New York",
+    "last_checked": "2025-06-18 13:00",
+    "open_ports": [21, 80],
+    "hostname": "webserver.us",
+    "os": "Ubuntu 20.04"
+  },
+  "192.168.1.5": {
+    "country": "Russia",
+    "city": "Moscow",
+    "last_checked": "2025-06-18 13:05",
+    "open_ports": [22],
+    "hostname": "srv.ru",
+    "os": "Debian 11"
+  },
+  "192.168.1.6": {
+    "country": "China",
+    "city": "Beijing",
+    "last_checked": "2025-06-18 13:10",
+    "open_ports": [80, 443, 8080],
+    "hostname": "web.cn",
+    "os": "CentOS 7"
+  },
+  "192.168.1.7": {
+    "country": "Japan",
+    "city": "Tokyo",
+    "last_checked": "2025-06-18 13:15",
+    "open_ports": [22, 3306],
+    "hostname": "db.jp",
+    "os": "FreeBSD"
+  },
+  "192.168.1.8": {
+    "country": "Brazil",
+    "city": "São Paulo",
+    "last_checked": "2025-06-18 13:20",
+    "open_ports": [25, 110],
+    "hostname": "mail.br",
+    "os": "Windows 10"
+  },
+  "192.168.1.9": {
+    "country": "India",
+    "city": "Mumbai",
+    "last_checked": "2025-06-18 13:25",
+    "open_ports": [22, 80, 443, 3306],
+    "hostname": "srv.in",
+    "os": "AlmaLinux"
+  },
+  "192.168.1.10": {
+    "country": "UK",
+    "city": "London",
+    "last_checked": "2025-06-18 13:30",
+    "open_ports": [8080],
+    "hostname": "proxy.uk",
+    "os": "Windows Server 2022"
+  },
+  "192.168.1.11": {
+    "country": "Australia",
+    "city": "Sydney",
+    "last_checked": "2025-06-18 13:40",
+    "open_ports": [53, 443],
+    "hostname": "dns.au",
+    "os": "Red Hat Enterprise Linux 9"
+  }
+
+}

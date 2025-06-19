@@ -5,7 +5,7 @@ import os
 import platform
 import random
 
-from loading_screen import show_loading_screen  # Импортируем функцию загрузки
+from Values.loading_screen import show_loading_screen  # Импортируем функцию загрузки
 
 def detect_os():
     """Определяет операционную систему."""
@@ -156,7 +156,7 @@ def check_ip_ui(parent_frame, go_back_callback=None):
                 proxies = [line.strip() for line in f if line.strip()]
             if not proxies:
                 return None
-            new_proxy = random.choice(proxies)
+            new_proxy = current_proxy
             # Сохраняем в settings.json
             try:
                 with open("settings.json", "r", encoding="utf-8") as f:

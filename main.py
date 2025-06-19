@@ -1,5 +1,5 @@
 from setup import setup  # Импортируем функцию настройки
-from date_time_config import *
+from Values.date_time_config import *
 if should_check_update():
     setup()
     update_last_check_time()
@@ -8,26 +8,27 @@ if should_check_update():
 import customtkinter as ctk
 from PIL import Image, ImageTk, ImageSequence
 #+++++++++++++++Import all UI+++++++++++++++
-from phishing_ui import create_main_phishing_ui
-from wifi_ui import create_main_wifi_ui
-from network_scan_ui import ns_ui  # Импортируем функцию создания интерфейса сканирования сети
-from bruteforce_ui import init_bruteforce_ui
-from game_ui import init_game_ui  # Импортируем функцию создания меню игр
-from greeting import show_greeting  # Импортируем функцию показа приветствия
-from DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
-from settings_ui import init_settings_ui, selected_timeout  # Импортируем функцию создания настроек и выбранное время
-from ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
-from see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
-from pi_helper_ui import pi_helper_ui
-from rat_ui import create_rat_ui
-from osint_ui import create_osint_ui
-from qr_code_ui import create_qr_code_ui
-from bad_ble import bad_ble_ui
-from scan_site_ui import scan_site_ui
-from proxy_ui import create_proxy_ui
-from task_sheduler import task_sheduler_ui  # Импортируем функцию создания интерфейса планировщика задач
-from terminal_ui import terminal_ui
-from virus_ui import create_gallery_ui as create_virus_ui
+from Values.phishing_ui import create_main_phishing_ui
+from Values.wifi_ui import create_main_wifi_ui
+from Values.network_scan_ui import ns_ui  # Импортируем функцию создания интерфейса сканирования сети
+from Values.bruteforce_ui import init_bruteforce_ui
+from Values.game_ui import init_game_ui  # Импортируем функцию создания меню игр
+from Values.greeting import show_greeting  # Импортируем функцию показа приветствия
+from Values.DVD_ui import create_dvd_ui  # Импортируем функцию создания DVD анимации
+from Values.settings_ui import init_settings_ui, selected_timeout  # Импортируем функцию создания настроек и выбранное время
+from Values.ddos_ui import create_ddos_ui  # Импортируем функцию создания DDoS UI
+from Values.see_files_ui import file_browser_ui  # Импортируем функцию создания файлового браузера
+from Values.pi_helper_ui import pi_helper_ui
+from Values.rat_ui import create_rat_ui
+from Values.osint_ui import create_osint_ui
+from Values.qr_code_ui import create_qr_code_ui
+from Values.bad_ble import bad_ble_ui
+from Values.scan_site_ui import scan_site_ui
+from Values.proxy_ui import create_proxy_ui
+from Values.task_sheduler import task_sheduler_ui  # Импортируем функцию создания интерфейса планировщика задач
+from Values.terminal_ui import terminal_ui
+from Values.virus_ui import create_gallery_ui as create_virus_ui
+from Values.exit_Value import exit_values
 #-----Task Scheduler----------
 from TaskScheduler.proxy_task import stop_flag
 from TaskScheduler.Proxy import proxy
@@ -66,7 +67,6 @@ current_edition = None
 
 image_button_current = None
 image_button_next = None
-
 
 last_proxy_update = 0  # глобальное время последнего обновления
 
@@ -337,8 +337,15 @@ def start_proxy_validator_loop(settings_path="settings.json", proxy_file="workin
 
 def exit_btn():
     def exit_app():
-        stop_flag.set()
-        app.quit()
+        global alowed_swipe
+        alowed_swipe = False
+
+        def go_back():
+            global alowed_swipe
+            alowed_swipe = True
+            init_main_ui(content_frame)
+        
+        exit_values(content_frame, go_back_callback=go_back)
     
     logout_img = Image.open("images/Logout.png")  # Загружаем изображение
     logout_img = logout_img.resize((50, 50))  # Измените размер изображения по необходимости
@@ -707,11 +714,11 @@ def init_main_ui(parent_frame):
     label_text.place(relx=0.5, rely=0.75, anchor="center")
 
     # Левая стрелка
-    prev_button = ctk.CTkButton(parent_frame, text="←", width=50, command=prev_slide, font=("Arial", 24))
+    prev_button = ctk.CTkButton(parent_frame, text="←", width=50, height=50, command=prev_slide, font=("Arial", 24))
     prev_button.place(relx=0.1, rely=0.4, anchor="center")
 
     # Правая стрелка
-    next_button = ctk.CTkButton(parent_frame, text="→", width=50, command=next_slide, font=("Arial", 24))
+    next_button = ctk.CTkButton(parent_frame, text="→", width=50, height=50, command=next_slide, font=("Arial", 24))
     next_button.place(relx=0.9, rely=0.4, anchor="center")
 
     # Загрузить первый слайд

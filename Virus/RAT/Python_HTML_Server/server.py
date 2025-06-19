@@ -128,4 +128,4 @@ def downoald_and_update_file(filename):
 def run_flask():
     app.run(port=5000, debug=True, use_reloader=False)
 
-run_flask()
+# run_flask()

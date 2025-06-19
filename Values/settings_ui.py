@@ -1,7 +1,7 @@
 import json
 import customtkinter as ctk
 import os
-from date_time_config import *
+from Values.date_time_config import *
 
 from settings.about_device import about_device_ui  # Импортируем функцию очистки фрейма из about_device.py
 from settings.customithation_ui import create_customization_ui  # Импортируем функцию очистки фрейма из customithation_ui.py

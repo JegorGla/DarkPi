@@ -2,7 +2,7 @@ import customtkinter as ctk
 from PIL import Image
 import os
 
-from rat_ui import create_rat_ui
+from Values.rat_ui import create_rat_ui
 
 # Галерея карточек
 gallery_items = [

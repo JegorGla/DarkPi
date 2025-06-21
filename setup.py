@@ -7,8 +7,77 @@ import os
 
 list_of_linux_package = [
     "lolcat",
-    "figlet"
+    "figlet",
+    "tor",
+    "proxychains"
 ]
+
+def setup_proxychains_config():
+    import shutil
+
+    global_path = "/etc/proxychains.conf"
+    user_path = os.path.expanduser("~/.proxychains/proxychains.conf")
+
+    target_path = None
+    if os.path.isfile(global_path) and os.access(global_path, os.W_OK):
+        target_path = global_path
+    else:
+        os.makedirs(os.path.dirname(user_path), exist_ok=True)
+        target_path = user_path
+
+    proxy_lines = [
+        "http 127.0.0.1 8080\n",
+        "https 127.0.0.1 8080\n",
+        "socks4 127.0.0.1 9050\n",
+        "socks5 127.0.0.1 9050\n",
+    ]
+
+    # Считаем файл или создаём минимальный шаблон
+    if os.path.isfile(target_path):
+        with open(target_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    else:
+        lines = [
+            "strict_chain\n",
+            "proxy_dns\n",
+            "remote_dns_subnet 224\n",
+            "tcp_read_time_out 15000\n",
+            "tcp_connect_time_out 8000\n",
+            "\n",
+            "[ProxyList]\n"
+        ]
+
+    # Найдём индекс [ProxyList]
+    try:
+        idx = lines.index("[ProxyList]\n")
+    except ValueError:
+        lines.append("\n[ProxyList]\n")
+        idx = len(lines) - 1
+
+    # Удаляем все прокси-строки после [ProxyList]
+    new_lines = lines[:idx+1]  # до и включая [ProxyList]
+
+    for line in lines[idx+1:]:
+        if not line.strip().startswith(("socks5", "socks4", "http", "https")):
+            new_lines.append(line)
+
+    # Добавляем наши строки в конец секции ProxyList
+    new_lines.extend(proxy_lines)
+
+    # Резервное копирование перед записью (рекомендуется)
+    try:
+        if os.path.isfile(target_path):
+            shutil.copy(target_path, target_path + ".bak")
+    except Exception as e:
+        print(f"[WARNING] Не удалось создать резервную копию: {e}")
+
+    # Записываем обновлённый конфиг
+    try:
+        with open(target_path, "w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+        print(f"[INFO] Proxychains config обновлен: {target_path}")
+    except PermissionError:
+        print(f"[ERROR] Нет прав для записи в {target_path}. Запустите с sudo или настройте вручную.")
 
 def countdown(seconds=5):
     print("Вы можете остановить обновление в любой момент, нажав 's'!")
@@ -124,6 +193,7 @@ def setup():
     """Главная функция настройки окружения."""
     if platform.system() != "Windows":
         install_linux_package()
+        setup_proxychains_config()
     install_requirements()
     install_localonet()
     install_ngrok()

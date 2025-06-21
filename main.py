@@ -1,3 +1,5 @@
+import platform
+import subprocess
 from setup import setup  # Импортируем функцию настройки
 from Values.date_time_config import *
 if should_check_update():
@@ -1139,6 +1141,13 @@ def run_scheduled_task():
         thread.daemon = True  # завершится с закрытием программы
         thread.start()
 
+def start_tor_for_proxy():
+    def run_tor():
+        # Запуск команды через shell=True, чтобы работала systemctl
+        subprocess.run("systemctl start tor", shell=True)
+
+    thread = threading.Thread(target=run_tor, daemon=True)
+    thread.start()
 
 
 # Привязка событий к окну
@@ -1160,6 +1169,8 @@ show_greeting(app, callback=lambda: show_loading(callback=lambda: init_main_ui(c
 load_scheduler_setting()
 load_scheduler_setting()
 schedule_checker()
+if platform.system() != "Windows":
+    start_tor_for_proxy()
 
 # ========== Настройки приложения ==========
 app.geometry("800x480")

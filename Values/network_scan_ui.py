@@ -44,7 +44,7 @@ def ns_ui(parent_frame, go_back_callback=None):
     geo_ip_button = ctk.CTkButton(
         parent_frame,
         text="Geo IP",
-        command=lambda: display_ip_info(None, parent_frame, go_back_callback),
+        command=lambda: display_ip_info(parent_frame, go_back_callback),
         font=("Arial", 16),
         width=parent_frame.winfo_width() * 0.7,
         height=40

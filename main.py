@@ -625,12 +625,12 @@ def get_current_edition():
     try:
         with open("settings.json", "r") as f:
             data = json.load(f)
-            edition = data.get("edition", "Normal edition")  # Значение по умолчанию
+            edition = data.get("edition", "Evil eye")  # Значение по умолчанию
             #print(f"[INFO] Loaded edition from settings: {edition}")
             return edition
     except (json.JSONDecodeError, FileNotFoundError) as e:
         print(f"[ERROR] {e}. Returning default edition 'Normal edition'.")
-        return "Normal edition"  # Возвращаем дефолтное значение
+        return "Evil eye"  # Возвращаем дефолтное значение
 
 def show_gif_animation():
     global gif_label, gif_frames, gif_durations, gif_animation_running, gif_visible, current_edition
@@ -646,10 +646,22 @@ def show_gif_animation():
 
     try:
         # Проверяем наличие файла GIF в зависимости от редакции
-        if edition == "Normal edition" and os.path.exists("images/EvilEye.gif"):
-            gif = Image.open("images/EvilEye.gif")
-        elif edition == "P Diddy edition" and os.path.exists("images/P_ddidy.gif"):
-            gif = Image.open("images/P_ddidy.gif")
+        if edition == "Evil eye" and os.path.exists("images/gif_animation/EvilEye.gif"):
+            gif = Image.open("images/gif_animation/EvilEye.gif")
+        elif edition == "P Diddy" and os.path.exists("images/gif_animation/P_ddidy.gif"):
+            gif = Image.open("images/gif_animation/P_ddidy.gif")
+        elif edition == "Smile ascii" and os.path.exists("images/gif_animation/ascii_smile.gif"):
+            gif = Image.open("images/gif_animation/ascii_smile.gif")
+        elif edition == "Matrix" and os.path.exists("images/gif_animation/hacker_matrix.gif"):
+            gif = Image.open("images/gif_animation/hacker_matrix.gif")
+        elif edition == "Boom" and os.path.exists("images/gif_animation/ascii_boom_correct_order.gif"):
+            gif = Image.open("images/gif_animation/ascii_boom_correct_order.gif")
+        elif edition == "Car" and os.path.exists("images/gif_animation/car.gif"):
+            gif = Image.open("images/gif_animation/car.gif")
+        elif edition == "Space warp" and os.path.exists("images/gif_animation/space_warp_loop.gif"):
+            gif = Image.open("images/gif_animation/space_warp_loop.gif")
+        elif edition == "Earth" and os.path.exists("images/gif_animation/earth.gif"):
+            gif = Image.open("images/gif_animation/earth.gif")
         else:
             raise FileNotFoundError("GIF file not found for selected edition.")
     except (FileNotFoundError, Exception) as e:

@@ -156,7 +156,7 @@ def check_ip_ui(parent_frame, go_back_callback=None):
                 proxies = [line.strip() for line in f if line.strip()]
             if not proxies:
                 return None
-            new_proxy = current_proxy
+            new_proxy = random.choice(proxies)
             # Сохраняем в settings.json
             try:
                 with open("settings.json", "r", encoding="utf-8") as f:

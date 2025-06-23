@@ -3,16 +3,30 @@ import customtkinter as ctk
 import json
 import os
 
+current_proxy = None
+
 def clear_frame(frame):
     """Очищает все виджеты внутри переданного фрейма."""
     for widget in frame.winfo_children():
         widget.destroy()
 
+def get_current_proxy():
+    """Получаем текущий прокси из файла."""
+    try:
+        with open("settings.json", "r", encoding="utf-8") as f:
+            proxy = f.read().strip()
+            if proxy:
+                current_proxy = {"current_proxy": proxy}
+    except FileNotFoundError:
+        print("Proxy file not found. Using direct connection.")
+    return None
+
 def get_ip_info(ip):
     """Получаем информацию о IP-адресе с помощью ipinfo.io API."""
     try:
         url = f"https://ipinfo.io/{ip}/json"
-        response = requests.get(url)
+        proxy = current_proxy or get_current_proxy()
+        response = requests.get(url, proxies=proxy, timeout=10)
         if response.status_code == 200:
             return response.json()
         else:

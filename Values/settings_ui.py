@@ -21,7 +21,7 @@ def create_default_settings():
     """Создание файла с настройками по умолчанию."""
     default_settings = {
         "timeout": "5 seconds",
-        "edition": "Normal edition",
+        "edition": "Evil eye",
         "fullscreen": "Yes",
         "Time to check update": "1 day",
         "use_proxy": "Yes"
@@ -41,7 +41,7 @@ def load_timeout_setting():
             with open("settings.json", "r") as f:
                 data = json.load(f)
                 selected_timeout = data.get("timeout", "5 seconds")
-                selected_edition = data.get("edition", "Normal edition")
+                selected_edition = data.get("edition", "Evil eye")
                 fullscreen = data.get("fullscreen", "No")
                 selected_check_update = data.get("update_check_interval", "1 day")
                 use_proxy = data.get("use_proxy", "Yes")
@@ -57,7 +57,7 @@ def load_timeout_setting():
         print("[WARNING] settings.json not found, creating default settings...")
         create_default_settings()
         selected_timeout = "5 seconds"
-        selected_edition = "Normal edition"
+        selected_edition = "Evil eye"
         fullscreen = "No"
         selected_check_update = "1 day"
         use_proxy = "Yes"
@@ -124,7 +124,7 @@ def get_use_proxy_value():
 def init_settings_ui(parent_frame, go_back_callback):
     """Функция для инициализации UI настроек."""
     clear_frame(parent_frame)
-    
+
 
     def set_edition(event=None):
         """Функция для обработки выбранной редакции."""
@@ -141,11 +141,14 @@ def init_settings_ui(parent_frame, go_back_callback):
     
 
 
-    # Заголовок
+    # Заголовок (оставляем через place, чтобы был сверху по центру)
     title = ctk.CTkLabel(parent_frame, text="Settings", font=("Arial", 24))
     title.place(relx=0.5, rely=0.1, anchor="center")
 
-    # Кнопка "Назад"
+    # Основной скроллируемый фрейм с отступом сверху, чтобы не закрывать заголовок
+    main_frame = ctk.CTkScrollableFrame(parent_frame)
+    main_frame.pack(fill="both", expand=True, pady=(60, 20), padx=20)
+
     def go_back():
         global selected_timeout, selected_edition, selected_check_update, selected_fullscreen, use_proxy
         selected_timeout = timeout_combo.get()
@@ -156,101 +159,89 @@ def init_settings_ui(parent_frame, go_back_callback):
         save_timeout_setting()
         go_back_callback()
 
-
-
     back_btn = ctk.CTkButton(parent_frame, text="← Back", command=go_back)
-    back_btn.place(relx=0.01, rely=0.01, anchor="nw")
+    back_btn.pack(anchor="nw", pady=10, padx=10)
 
-    # ==== Блок Use Proxies ====  
-    setting_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
-    setting_frame.place(relx=0.54, rely=0.25, anchor="center", relwidth=1)
+    # Use proxies блок
+    setting_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    setting_frame.pack(fill="x", pady=10, padx=10)
 
     setting_label = ctk.CTkLabel(setting_frame, text="Use proxies", anchor="w", font=("Arial", 16))
     setting_label.pack(side="left", fill="x", expand=True, padx=(10, 0))
 
     global use_proxies_var
     use_proxies_var = ctk.BooleanVar(value=get_use_proxy_value())
-    checkbox = ctk.CTkCheckBox(
-        setting_frame,
-        variable=use_proxies_var,
-        text="",
-        command=save_timeout_setting  # сохраняем при изменении
-    )
+    checkbox = ctk.CTkCheckBox(setting_frame, variable=use_proxies_var, text="", command=save_timeout_setting)
     checkbox.pack(side="right")
 
-    # ==================== About Device ====================
-    about_device_btn = ctk.CTkButton(
-        parent_frame, 
-        text="About Device", 
-        command=lambda: about_device_ui(parent_frame, go_back_callback), 
-        font=("Arial", 16)
-    )
-    about_device_btn.place(relx=0.5, rely=0.4, anchor="center", relwidth=0.9)
-
-    # Горизонтальная линия
-    separator = ctk.CTkFrame(parent_frame, height=1, fg_color="#444444")
-    separator.place(relx=0.05, rely=0.3, relwidth=0.9)
-
-    # ==== Настройка времени для GIF-анимации ====
-    global timeout_combo
-    timeout_combo = ctk.CTkComboBox(
-        parent_frame, 
-        values=["5 seconds", "10 seconds", "30 seconds", "1 minute", "5 minutes"],
-        font=("Arial", 16), 
-        state="readonly",
-    )
-    timeout_combo.place(relx=0.5, rely=0.6, anchor="center", relwidth=0.9)
-
-    timeout_combo.set(selected_timeout if selected_timeout else "Select timeout")
-    timeout_combo.bind("<<ComboboxSelected>>", set_gif_timeout)
-
-    global update_checker_combo
-    update_checker_combo = ctk.CTkComboBox(
-        parent_frame,
-        values=["1 day", "5 day", "1 month", "1 year", "Never"],
-        font=("Arial", 16), 
-        state="readonly"
-    )
-    update_checker_combo.place(relx=0.5, rely=0.7, anchor="center", relwidth=0.9)
-    update_checker_combo.set(selected_check_update if selected_check_update else "Select interval")
-    update_checker_combo.bind("<<ComboboxSelected>>", set_update_check_interval)
-
-    edition_combo = ctk.CTkComboBox(
-        parent_frame, 
-        values=["Normal edition", "P Diddy edition"],
-        font=("Arial", 16), 
-        state="readonly",
-    )
-    edition_combo.place(relx=0.5, rely=0.8, anchor="center", relwidth=0.9)
-    edition_combo.set(selected_edition if selected_edition else "Select edition")
-    edition_combo.bind("<<ComboboxSelected>>", set_edition)
-
-
-    # ==== Блок Fullscreen ====
-    fullscreen_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
-    fullscreen_frame.place(relx=0.54, rely=0.33, anchor="center", relwidth=1)
+    # Fullscreen блок
+    fullscreen_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    fullscreen_frame.pack(fill="x", pady=10, padx=10)
 
     fullscreen_label = ctk.CTkLabel(fullscreen_frame, text="Fullscreen", anchor="w", font=("Arial", 16))
     fullscreen_label.pack(side="left", fill="x", expand=True, padx=(10, 0))
 
-
     global fullscreen_var
     fullscreen_var = ctk.BooleanVar(value=get_fullscreen_value())
-    fullscreen_check_box = ctk.CTkCheckBox(
-        fullscreen_frame,
-        variable=fullscreen_var,
-        text="",
-        command=save_timeout_setting
-    )
+    fullscreen_check_box = ctk.CTkCheckBox(fullscreen_frame, variable=fullscreen_var, text="", command=save_timeout_setting)
     fullscreen_check_box.pack(side="right")
 
-    customithation_raspberry_pi = ctk.CTkButton(
-        parent_frame, 
-        text="Customithation Raspberry Pi", 
-        command=lambda: create_customization_ui(parent_frame, go_back_callback), 
+    # About Device кнопка
+    about_device_btn = ctk.CTkButton(
+        main_frame,
+        text="About Device",
+        command=lambda: about_device_ui(main_frame, go_back_callback),
         font=("Arial", 16)
     )
-    customithation_raspberry_pi.place(relx=0.5, rely=0.9, anchor="center", relwidth=0.9)        
+    about_device_btn.pack(fill="x", pady=10, padx=10)
+
+    # Разделитель
+    separator = ctk.CTkFrame(main_frame, height=1, fg_color="#444444")
+    separator.pack(fill="x", padx=10, pady=10)
+
+    # Таймаут комбобокс
+    global timeout_combo
+    timeout_combo = ctk.CTkComboBox(
+        main_frame,
+        values=["5 seconds", "10 seconds", "30 seconds", "1 minute", "5 minutes"],
+        font=("Arial", 16),
+        state="readonly",
+    )
+    timeout_combo.pack(fill="x", padx=10, pady=10)
+    timeout_combo.set(selected_timeout if selected_timeout else "Select timeout")
+    timeout_combo.bind("<<ComboboxSelected>>", set_gif_timeout)
+
+    # Интервал проверки обновлений
+    global update_checker_combo
+    update_checker_combo = ctk.CTkComboBox(
+        main_frame,
+        values=["1 day", "5 day", "1 month", "1 year", "Never"],
+        font=("Arial", 16),
+        state="readonly",
+    )
+    update_checker_combo.pack(fill="x", padx=10, pady=10)
+    update_checker_combo.set(selected_check_update if selected_check_update else "Select interval")
+    update_checker_combo.bind("<<ComboboxSelected>>", set_update_check_interval)
+
+    # Редакция
+    edition_combo = ctk.CTkComboBox(
+        main_frame,
+        values=["Evil eye", "P Diddy", "Smile ascii", "Matrix", "Boom", "Car", "Space warp", "Earth"],
+        font=("Arial", 16),
+        state="readonly",
+    )
+    edition_combo.pack(fill="x", padx=10, pady=10)
+    edition_combo.set(selected_edition if selected_edition else "Select edition")
+    edition_combo.bind("<<ComboboxSelected>>", set_edition)
+
+    # Кнопка Customization Raspberry Pi
+    customithation_raspberry_pi = ctk.CTkButton(
+        main_frame,
+        text="Customization Raspberry Pi",
+        command=lambda: create_customization_ui(main_frame, go_back_callback),
+        font=("Arial", 16),
+    )
+    customithation_raspberry_pi.pack(fill="x", pady=20, padx=10)
 
 # Загружаем сохранённую настройку при запуске
 load_timeout_setting()

@@ -182,6 +182,73 @@ def load_ip_data():
         print(f"[Ошибка загрузки IP]: {e}")
         return {}
 
+abbreviated_countries = {
+    "US": "United States of America",
+    "HU": "Hungary",
+    "AE": "United Arab Emirates",
+    "FR": "France",
+    "GB": "United Kingdom",
+    "DE": "Germany",
+    "IT": "Italy",
+    "ES": "Spain",
+    "CN": "China",
+    "JP": "Japan",
+    "RU": "Russia",
+    "IN": "India",
+    "BR": "Brazil",
+    "CA": "Canada",
+    "AU": "Australia",
+    "MX": "Mexico",
+    "KR": "South Korea",
+    "NL": "Netherlands",
+    "SE": "Sweden",
+    "CH": "Switzerland",
+    "NO": "Norway",
+    "PL": "Poland",
+    "BE": "Belgium",
+    "AT": "Austria",
+    "DK": "Denmark",
+    "FI": "Finland",
+    "IE": "Ireland",
+    "PT": "Portugal",
+    "ZA": "South Africa",
+    "NZ": "New Zealand",
+    "SG": "Singapore",
+    "IL": "Israel",
+    "SA": "Saudi Arabia",
+    "TR": "Turkey",
+    "CZ": "Czech Republic",
+    "GR": "Greece",
+    "RO": "Romania",
+    "HU": "Hungary",
+    "BG": "Bulgaria",
+    "HR": "Croatia",
+    "SI": "Slovenia",
+    "SK": "Slovakia",
+    "LT": "Lithuania",
+    "LV": "Latvia",
+    "EE": "Estonia",
+    "UA": "Ukraine",
+    "BY": "Belarus",
+    "EG": "Egypt",
+    "NG": "Nigeria",
+    "KE": "Kenya"
+}   
+
+def country_from_ip():
+    with open("IPMapper/ip.json", "r", encoding="utf-8") as f:
+        ip_data = json.load(f)
+    country_data = {}
+    for ip, data in ip_data.items():
+        if isinstance(data, dict) and "country" in data:
+            short_country = data["country"]
+            # Замена кода на полное имя, если есть, иначе оставить как есть
+            full_country = abbreviated_countries.get(short_country, short_country)
+            if full_country not in country_data:
+                country_data[full_country] = []
+            country_data[full_country].append(ip)
+    return country_data
+
 def create_topology(parent_frame, go_back_callback):
     clear_frame(parent_frame)
 
@@ -190,6 +257,13 @@ def create_topology(parent_frame, go_back_callback):
 
     control_frame = ctk.CTkFrame(topology_frame, height=40)
     control_frame.pack(fill="x", side="top", padx=10, pady=5)
+
+    hamburger_menu = ctk.CTkFrame(parent_frame, width=700, corner_radius=10)
+
+    countries = ["Все"] + list(country_from_ip().keys())
+    filters = ctk.CTkComboBox(hamburger_menu, values=countries, height=30, state="readonly")
+    filters.set("Все")  # Значение по умолчанию — показать всех
+    filters.place(x=10, y=10, relwidth=0.8, relheight=0.1)
 
     main_area = ctk.CTkFrame(topology_frame)
     main_area.pack(fill="both", expand=True)
@@ -314,3 +388,97 @@ def create_topology(parent_frame, go_back_callback):
             print(f"[Ошибка сохранения координат]: {e}")
 
     canvas.after(100, render_topology)
+
+    #======Hamburger menu======
+
+    sidebar_visible = False  # Флаг
+    
+    def toggle_sidebar():
+        nonlocal sidebar_visible
+        if sidebar_visible:
+            animate_sidebar_close(hamburger_menu)
+            # sidebar_visible = False  <- убираем отсюда
+        else:
+            control_frame.update_idletasks()
+            start_x = control_frame.winfo_width()
+            target_x = start_x - 900
+            hamburger_menu.place(x=start_x, y=0, relheight=1.0)
+            animate_sidebar_open(hamburger_menu, target_x)
+            sidebar_visible = True
+
+    
+    # Анимация появления
+    def animate_sidebar_open(frame, target_x, step=20):
+        current_x = control_frame.winfo_width()
+        def slide():
+            nonlocal current_x
+            if current_x > target_x:
+                current_x -= step
+                frame.place(x=current_x, y=0)  # НЕ меняем width/height!
+                control_frame.after(10, slide)
+            else:
+                frame.place(x=target_x, y=0)
+        slide()
+
+    def animate_sidebar_close(frame, step=20):
+        current_x = frame.winfo_x()
+        target_x = control_frame.winfo_width()
+
+        def slide():
+            nonlocal current_x
+            if current_x < target_x:
+                current_x += step
+                frame.place(x=current_x, y=0)  # НЕ меняем width/height!
+                control_frame.after(10, slide)
+            else:
+                frame.place_forget()
+                nonlocal sidebar_visible
+                sidebar_visible = False
+        slide()
+
+
+    close_menu = ctk.CTkButton(hamburger_menu, text="❌", width=50, height=50, command=lambda: animate_sidebar_close(hamburger_menu))
+    close_menu.place(relx=0.99, rely=0.05, anchor="ne")
+    close_menu.lift()
+
+    hamburger_btn = ctk.CTkButton(control_frame, text="☰", width=40, height=40, command=toggle_sidebar)
+    hamburger_btn.pack(side="left", padx=10, pady=5)
+    hamburger_btn.lift()
+
+    def update_topology_for_country(country):
+        nonlocal nodes, edges
+
+        if country == "Все":
+            nodes = list(set(ip_info.keys()) | {localhost})
+            if local_ip in nodes:
+                nodes.remove(local_ip)
+        else:
+            filtered_ips = country_from_ip().get(country, [])
+            nodes = list(set(filtered_ips))
+        
+        edges = []
+        for ip in nodes:
+            if ip != local_ip:
+                edges.append((local_ip, ip))
+
+        canvas.delete("all")
+        render_topology()
+
+
+    def on_filter_change(choice):
+        nonlocal nodes, edges  # добавить nonlocal
+
+        if choice == "Все":
+            nodes = list(set(ip_info.keys()) | {localhost})
+            if local_ip in nodes:
+                nodes.remove(local_ip)
+            edges = [(local_ip, ip) for ip in nodes if ip != local_ip]
+        else:
+            update_topology_for_country(choice)
+
+        canvas.delete("all")
+        render_topology()
+
+
+    filters.set("Выберите страну")  # Установка значения по умолчанию
+    filters.configure(command=on_filter_change)  # Привязка обработчика

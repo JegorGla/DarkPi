@@ -1,6 +1,9 @@
 import customtkinter as ctk
 import pywifi
 from pywifi import const
+import subprocess
+import threading
+import platform
 import time
 import json
 import os
@@ -50,14 +53,89 @@ def connect_to_wifi(ssid, password):
 
 def create_wifi_ui(parent_frame, go_back_callback):
     clear_frame(parent_frame)  # очищаем перед загрузкой UI
+    
+    def get_wifi_interface_name_windows():
+        try:
+            output = subprocess.check_output("netsh wlan show interfaces", shell=True, encoding="cp1251")
+            print("[DEBUG] netsh wlan show interfaces output:\n", output)
+            for line in output.splitlines():
+                if "Имя" in line or "Name" in line:  # Обе локализации
+                    name = line.split(":", 1)[1].strip()
+                    print(f"[DEBUG] Wi-Fi интерфейс найден: {name}")
+                    return name
+        except Exception as e:
+            print(f"[ERROR] Ошибка при получении интерфейса (Windows): {e}")
+        return None
+
+    def get_wifi_interface_name_linux():
+        try:
+            output = subprocess.check_output("nmcli device status", shell=True, encoding="utf-8")
+            print("[DEBUG] nmcli device status output:\n", output)
+            for line in output.splitlines():
+                if "wifi" in line and "connected" in line:
+                    iface = line.split()[0]
+                    print(f"[DEBUG] Wi-Fi интерфейс найден: {iface}")
+                    return iface
+        except subprocess.CalledProcessError as e:
+            print(f"[ERROR] Ошибка при получении интерфейса (Linux): {e}")
+        return None
+
+    def togle_wifi():
+        state = wifi.get()
+        print(f"[DEBUG] Состояние переключателя Wi-Fi: {state}")
+
+        if state:
+            if platform.system() == "Windows":
+                name = get_wifi_interface_name_windows()
+                if name:
+                    try:
+                        subprocess.run(f'netsh interface set interface name="{name}" admin=enable', shell=True, check=True)
+                        print(f"[DEBUG] Интерфейс {name} включен.")
+                    except subprocess.CalledProcessError as e:
+                        print(f"[ERROR] Не удалось включить интерфейс {name}: {e}")
+            elif platform.system() == "Linux":
+                iface = get_wifi_interface_name_linux()
+                if iface:
+                    try:
+                        subprocess.run(f'nmcli device disconnect {iface}', shell=True, check=True)
+                        print(f"[DEBUG] Интерфейс {iface} отключен (как бы включение?)")
+                    except subprocess.CalledProcessError as e:
+                        print(f"[ERROR] Не удалось отключить интерфейс {iface}: {e}")
+        else:
+            if platform.system() == "Windows":
+                name = get_wifi_interface_name_windows()
+                if name:
+                    try:
+                        subprocess.run(f'netsh interface set interface name="{name}" admin=disable', shell=True, check=True)
+                        print(f"[DEBUG] Интерфейс {name} выключен.")
+                    except subprocess.CalledProcessError as e:
+                        print(f"[ERROR] Не удалось выключить интерфейс {name}: {e}")
+            elif platform.system() == "Linux":
+                iface = get_wifi_interface_name_linux()
+                if iface:
+                    try:
+                        subprocess.run(f'nmcli device connect {iface}', shell=True, check=True)
+                        print(f"[DEBUG] Интерфейс {iface} подключен.")
+                    except subprocess.CalledProcessError as e:
+                        print(f"[ERROR] Не удалось подключить интерфейс {iface}: {e}")
+
+
+    wifi = ctk.CTkCheckBox(parent_frame, text="Wifi", command=togle_wifi, font=("Arial", 16))
+    wifi.pack(pady=10)
 
     # Заголовок
     label_title = ctk.CTkLabel(parent_frame, text="Доступные Wi-Fi сети", font=("Arial", 20))
     label_title.pack(pady=10)
+    
+    networks_frame = ctk.CTkScrollableFrame(parent_frame, width=400, height=300)
+    if wifi.get(): 
+        # Фрейм для кнопок сетей
+        networks_frame.pack(pady=10, padx=20, fill="both", expand=True)
+    else:
+        networks_frame.pack_forget()  # Скрываем фрейм, если Wi-Fi выключен
 
-    # Фрейм для кнопок сетей
-    networks_frame = ctk.CTkFrame(parent_frame)
-    networks_frame.pack(pady=10)
+
+    
 
     def on_password_submit(ssid, entry, keyboard_frame):
         """Обрабатывает ввод пароля и подключается к сети."""

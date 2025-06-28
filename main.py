@@ -37,8 +37,6 @@ from TaskScheduler.proxy_task import stop_flag
 from TaskScheduler.Proxy import proxy
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 import time
-import pywifi
-import logging
 import requests
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -47,6 +45,7 @@ import os
 from datetime import datetime
 import datetime
 import random
+import socket
 #====================================================================
 
 
@@ -81,8 +80,6 @@ start_x = 0  # Начальная позиция свайпа
 
 theme_folder = "Theme/"
 #===================================================================
-
-logging.getLogger("pywifi").setLevel(logging.CRITICAL)
 
 def get_theme_from_settings():
     try:
@@ -386,9 +383,11 @@ def init_wifi_znak_with_texture(parent_frame):
 def update_wifi_icon():
     """Обновляет иконку в зависимости от состояния подключения к Wi-Fi."""
     if is_wifi_connected():
+        # print("[INFO] Wi-Fi is connected.")
         # Если Wi-Fi подключен, загружаем изображение для подключенного состояния
         texture_image = Image.open("images/WifiConnected.png")
     else:
+        # print("[INFO] Wi-Fi is disconnected.")
         # Если Wi-Fi не подключен, загружаем изображение для отключенного состояния
         texture_image = Image.open("images/WifiDisconnected.png")
     
@@ -408,27 +407,41 @@ def update_time():
     app.after(1000, update_time)  # Обновляем время каждую секунду
 
 def is_wifi_connected():
+    socket.setdefaulttimeout(3)
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        wifi = pywifi.PyWiFi()
-        iface = wifi.interfaces()[0]  # Получаем первый доступный интерфейс
-        return iface.status() == pywifi.const.IFACE_CONNECTED
-    except Exception as e:
-        pass
+        s.connect(("8.8.8.8", 53))
+        return True
+    except socket.error:
+        return False
 
 def show_connected_network():
     """Отображает название подключенной сети."""
-    try:
-        with open("settings.json", "r") as f:
-            data = json.load(f)
-            ssid = data.get("ssid", None)
-            if ssid:
-                wifi_znak_label.configure(text=f"{ssid}")
-                app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Скрываем текст через 2 секунды
-            else:
-                wifi_znak_label.configure(text="No connected")
-                app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Скрываем текст через 2 секунды
-    except FileNotFoundError:
-        wifi_znak_label.configure(text="Файл с данными сети не найден.")
+    if platform.system() == "Windows":
+        try:
+            output = subprocess.check_output(
+                "netsh wlan show interfaces",
+                shell=True,
+                encoding="cp866"  # Ключевой момент: правильная кодировка консоли
+            )
+            for line in output.splitlines():
+                if "SSID" in line and "BSSID" not in line:
+                    ssid = line.split(":", 1)[1].strip()
+                    wifi_znak_label.configure(text=ssid)  # Обновляем текст метки
+                    app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Сбрасываем текст через 2 секунды
+        except subprocess.CalledProcessError:
+            wifi_znak_label.configure(text="No connection")
+            app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Сбрасываем текст через 2 секунды
+    elif platform.system() == "Linux":
+        try:
+            output = subprocess.check_output("iwgetid -r", shell=True, text=True)
+            ssid = output.strip()
+            wifi_znak_label.configure(text=ssid)  # Обновляем текст метки
+            app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Сбрасываем текст через 2 секунды
+        except subprocess.CalledProcessError:
+            wifi_znak_label.configure(text="No connection")
+            app.after(2000, lambda: wifi_znak_label.configure(text=""))  # Сбрасываем текст через 2 секунды
+
 
 def check_and_update_wifi_status():
     """Периодическая проверка состояния Wi-Fi и обновление иконки."""

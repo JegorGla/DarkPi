@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from Wifi.wifi_connect import create_wifi_ui
+from Wifi.wifi_settings import create_wifi_ui
 from Wifi.check_ip_ui import check_ip_ui
 
 def clear_frame(frame):
@@ -19,7 +19,7 @@ def create_main_wifi_ui(parent_frame, go_back_callback=None):
     #####============Wifi connect=================#####
     wifi_connect_button = ctk.CTkButton(
         parent_frame,
-        text="Connect to Wi-Fi",
+        text="Wifi Settings",
         command=lambda: create_wifi_ui(parent_frame, go_back_callback),
         font=("Arial", 16),
         width=parent_frame.winfo_width() * 0.7,

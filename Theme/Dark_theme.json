@@ -84,5 +84,13 @@
     "unselected_hover_color": "#444444",
     "unselected_color": "#2b2b2b",
     "text_color_disabled": "#777777"
+  },
+  "CTkSwitch": {
+    "fg_color": ["#1e1e1e", "#1e1e1e"],
+    "progress_color": ["#3b8ed0", "#3b8ed0"],
+    "slider_color": ["#f1f1f1", "#f1f1f1"],
+    "border_color": ["#444444", "#444444"],
+    "border_width": 1,
+    "corner_radius": 10
   }
 }

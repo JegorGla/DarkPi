@@ -56,7 +56,7 @@ def create_wifi_ui(parent_frame, go_back_callback):
     
     def get_wifi_interface_name_windows():
         try:
-            output = subprocess.check_output("netsh wlan show interfaces", shell=True, encoding="cp1251")
+            output = subprocess.check_output("netsh wlan show interfaces", shell=True, encoding="utf-8", errors="replace")
             print("[DEBUG] netsh wlan show interfaces output:\n", output)
             for line in output.splitlines():
                 if "Имя" in line or "Name" in line:  # Обе локализации

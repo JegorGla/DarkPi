@@ -32,6 +32,7 @@ from Values.terminal_ui import terminal_ui
 from Values.virus_ui import create_gallery_ui as create_virus_ui
 from Values.exit_Value import exit_values
 from Values.topology_scaned_target import create_topology
+from Values.device_manager import device_manager_ui  # Импортируем функцию создания интерфейса менеджера устройств
 #-----Task Scheduler----------
 from TaskScheduler.proxy_task import stop_flag
 from TaskScheduler.Proxy import proxy
@@ -126,7 +127,8 @@ slides = [
     {"image": "images/Folder.png", "text": "See files", "action": "files_action"},
     {"image": "images/Proxy.png", "text": "Proxy", "action": "proxy_action"},
     {"image": "images/Settings.png", "text": "Settings", "action": "settings_action"},
-    {"image": "images/pi_helper.png", "text": "Pi-helper", "action": "pi_helper_action"}
+    {"image": "images/pi_helper.png", "text": "Pi-helper", "action": "pi_helper_action"},
+    {"image": "images/device_mngr.png", "text": "Device Manager", "action": "device_manager_action"}
 ]
 
 # Инициализация окна
@@ -1016,6 +1018,17 @@ def scaned_target_action():
         init_main_ui(content_frame)
 
     create_topology(content_frame, go_back_callback=go_back)
+
+def device_manager_action():
+    global alowed_swipe
+    alowed_swipe = False  # Отключаем свайп при заходе
+
+    def go_back():
+        global alowed_swipe
+        alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        init_main_ui(content_frame)
+
+    device_manager_ui(content_frame, go_back_callback=go_back)  # Инициализация интерфейса менеджера устройств
 #===========================================================================
 
 # События свайпа

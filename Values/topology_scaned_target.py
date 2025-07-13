@@ -23,14 +23,18 @@ class DraggableCanvas(ctk.CTkCanvas):
         self.current_scale = 1.0
         self.offset_x = 0
         self.offset_y = 0
-        self.bind("<ButtonPress-1>", self.on_start_drag)
-        self.bind("<B1-Motion>", self.on_drag)
-        self.bind("<MouseWheel>", self.on_zoom)
 
         self.drag_start = None
 
-        # Словарь для хранения id текста и их начальных размеров шрифта
+        self.bind("<ButtonPress-1>", self.on_start_drag)
+        self.bind("<B1-Motion>", self.on_drag)
+        self.bind("<ButtonRelease-1>", self.on_release)  # ← Добавить это
+        self.bind("<MouseWheel>", self.on_zoom)
+
         self.text_items = {}
+
+    def on_release(self, event):
+        self.drag_start = None
 
     def on_start_drag(self, event):
         self.drag_start = (event.x, event.y)

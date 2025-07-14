@@ -18,6 +18,14 @@ user_agents = [
     'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1',
 ]
 
+services = [
+    'Free Proxy List',
+    'GeoNode',
+    'ProxyScrape',
+    'Advanced Name',
+    'Free Proxy CZ',
+]
+
 def get_random_headers():
     return {
         'User-Agent': random.choice(user_agents),
@@ -252,6 +260,10 @@ def create_get_proxy_ui(parent_frame, go_back_callback=None):
     bottom_frame = ctk.CTkFrame(main_frame)
     bottom_frame.pack(fill="x", pady=10)
 
+    menu_frame = ctk.CTkFrame(main_frame, width=700, fg_color="#383838", corner_radius=10)
+
+    checkboxes = []
+
     close_keyboard_button = ctk.CTkButton(
         bottom_frame,
         text="X",
@@ -265,6 +277,72 @@ def create_get_proxy_ui(parent_frame, go_back_callback=None):
         border_width=2
     )
     close_keyboard_button.place(relx=1.0, rely=0.0, anchor="ne", x=-10, y=10)
+
+    sidebar_visible = False  # Флаг
+
+    def toggle_sidebar():
+        nonlocal sidebar_visible
+        if sidebar_visible:
+            animate_sidebar_close(menu_frame)
+            # sidebar_visible = False  <- убираем отсюда
+        else:
+            main_frame.update_idletasks()
+            start_x = main_frame.winfo_width()
+            target_x = start_x - 900
+            menu_frame.place(x=start_x, y=0, relheight=1.0)
+            animate_sidebar_open(menu_frame, target_x)
+            sidebar_visible = True
+
+    
+    # Анимация появления
+    def animate_sidebar_open(frame, target_x, step=20):
+        current_x = main_frame.winfo_width()
+        def slide():
+            nonlocal current_x
+            if current_x > target_x:
+                current_x -= step
+                frame.place(x=current_x, y=0, relheight=1.0)
+                main_frame.after(10, slide)
+            else:
+                frame.place(x=target_x, y=0, relheight=1.0)
+        slide()
+
+    def animate_sidebar_close(frame, step=20):
+        current_x = frame.winfo_x()
+        target_x = main_frame.winfo_width()
+
+        def slide():
+            nonlocal current_x
+            if current_x < target_x:
+                current_x += step
+                frame.place(x=current_x, y=0, relheight=1.0)
+                main_frame.after(10, slide)
+            else:
+                frame.place_forget()
+                nonlocal sidebar_visible
+                sidebar_visible = False  # Меняем флаг здесь, после анимации закрытия
+        slide()
+
+    hamburger_btn = ctk.CTkButton(
+        main_frame,
+        command=toggle_sidebar,
+        text="☰",  # Символ гамбургера
+        width=40,
+        height=40,
+        fg_color="#ff0000"  # Ярко-красный, чтобы точно было видно
+    )
+    hamburger_btn.place(relx=0.99, rely=0.1, anchor="ne")
+    hamburger_btn.lift()
+
+    y_offset = 10  # начальная координата по Y
+    spacing = 30   # расстояние между чекбоксами
+
+    for servise in services:
+        cb = ctk.CTkCheckBox(menu_frame, text=servise, text_color="#ffffff")
+        cb.place(x=10, y=y_offset)
+        y_offset += spacing  # увеличиваем отступ для следующего чекбокса
+        checkboxes.append(cb)
+
 
     # Функция для загрузки и проверки прокси с обновлением UI и сохранением в файл
     def load_and_check_proxies():
@@ -284,12 +362,25 @@ def create_get_proxy_ui(parent_frame, go_back_callback=None):
         proxies_text.insert("end", "Loading proxy...\n")
         parent_frame.update_idletasks()
 
-        proxies3 = get_proxies_from_free_proxy_list()
-        proxies4 = get_proxies_from_geonode()
-        proxies2 = get_proxies_from_proxyscrape()
-        proxies1 = get_proxies_from_advanced_name()
-        proxies5 = get_proxies_from_free_porxy_cz()
-        proxies = proxies1 + proxies2 + proxies3 + proxies4 + proxies5
+        selected_services = [cb.cget("text") for cb in checkboxes if cb.get() == 1]
+
+        if not selected_services:
+            proxies_text.insert("end", "No proxy sources selected. Please select at least one source.\n")
+            return
+
+        proxies = []
+
+        if "FreeProxyList" in selected_services:
+            proxies += get_proxies_from_free_proxy_list()
+        if "Geonode" in selected_services:
+            proxies += get_proxies_from_geonode()
+        if "ProxyScrape" in selected_services:
+            proxies += get_proxies_from_proxyscrape()
+        if "AdvancedName" in selected_services:
+            proxies += get_proxies_from_advanced_name()
+        if "FreeProxyCZ" in selected_services:
+            proxies += get_proxies_from_free_porxy_cz()
+
 
         working_proxies = []
         lock = threading.Lock()

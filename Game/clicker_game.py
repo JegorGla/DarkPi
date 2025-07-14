@@ -1,3 +1,4 @@
+from tkinter import messagebox
 import customtkinter as ctk
 
 class ClickerGame:
@@ -21,23 +22,23 @@ class ClickerGame:
 
         # Кнопка для кликов
         click_button = ctk.CTkButton(
-            self.parent_frame, text="Кликни меня!", font=("Arial", 16),
+            self.parent_frame, text="Click me!", font=("Arial", 16),
             command=self.increment_score
         )
         click_button.pack(pady=20)
 
         # Кнопка завершения игры
         finish_button = ctk.CTkButton(
-            self.parent_frame, text="Завершить", font=("Arial", 16),
+            self.parent_frame, text="End", font=("Arial", 16),
             command=self.finish_game
         )
         finish_button.pack(pady=20)
 
     def increment_score(self):
         self.score += 1
-        self.score_label.configure(text=f"Счет: {self.score}")
+        self.score_label.configure(text=f"Score: {self.score}")
 
     def finish_game(self):
-        messagebox.showinfo("Кликер", f"Игра завершена! Ваш счет: {self.score}")
+        messagebox.showinfo("Clicker", f"Game over! Your score: {self.score}")
         for widget in self.parent_frame.winfo_children():
             widget.destroy()

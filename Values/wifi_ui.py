@@ -2,6 +2,7 @@ import customtkinter as ctk
 
 from Wifi.wifi_settings import create_wifi_ui
 from Wifi.check_ip_ui import check_ip_ui
+from Wifi.find_ip_in_local import find_ip_in_local_ui
 
 def clear_frame(frame):
     """Очищает все виджеты в указанном фрейме."""
@@ -39,6 +40,17 @@ def create_main_wifi_ui(parent_frame, go_back_callback=None):
     )
     check_ip_button.place(relx=0.5, rely=0.5, anchor="center")
     #==========================================
+
+    #====================Find ip in local button===================
+    find_ip_button = ctk.CTkButton(
+        parent_frame,
+        text="Find IP in Local",
+        command=lambda: find_ip_in_local_ui(parent_frame, go_back_callback),
+        font=("Arial", 16),
+        width=parent_frame.winfo_width() * 0.7,
+        height=40
+    )
+    find_ip_button.place(relx=0.5, rely=0.6, anchor="center")
     #====================Back button===================
     back_button = ctk.CTkButton(
         parent_frame,
@@ -48,6 +60,6 @@ def create_main_wifi_ui(parent_frame, go_back_callback=None):
         width=parent_frame.winfo_width() * 0.7,
         height=40
     )
-    back_button.place(relx=0.5, rely=0.65, anchor="center")
+    back_button.place(relx=0.5, rely=0.7, anchor="center")
     #==================================================
 

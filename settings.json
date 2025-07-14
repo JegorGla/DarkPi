@@ -3,13 +3,13 @@
     "timeout": "5 seconds",
     "edition": "Space warp",
     "fullscreen": "No",
-    "last_update_check": "2025-06-28",
+    "last_update_check": "2025-07-14",
     "Time to check update": "1 day",
     "proxy_rechoice_interval": {
         "value": 1,
         "unit": "minutes"
     },
-    "current_proxy": "115.74.1.240:10008",
+    "current_proxy": "161.35.70.249:80",
     "update_check_interval": "1 day",
     "use_proxy": "Yes",
     "theme": "Blackout",

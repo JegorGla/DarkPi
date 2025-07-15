@@ -136,7 +136,7 @@ def find_ip_in_local_ui(parent_frame, go_back_callback=None):
     label_title = ctk.CTkLabel(parent_frame, text="Find IP in Local", font=("Arial", 24))
     label_title.pack(pady=10)
 
-    text_box = ctk.CTkTextbox(parent_frame, width=600, height=300, font=("Arial", 14))
+    text_box = ctk.CTkTextbox(parent_frame, width=600, height=300, font=("Arial", 14), state="disabled")
     text_box.pack(pady=10)
 
     def append_text(text):

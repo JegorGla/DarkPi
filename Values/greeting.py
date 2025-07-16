@@ -1,9 +1,30 @@
 import customtkinter as ctk
 import os
+import json
+
+def set_allowed_anim(value: bool):
+    try:
+        settings = {}
+
+        # Если файл существует, загрузить его содержимое
+        if os.path.exists("settings.json"):
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+
+        # Обновляем или добавляем ключ
+        settings["allowed_anim"] = value
+
+        # Записываем обратно обновлённый словарь
+        with open("settings.json", "w") as f:
+            json.dump(settings, f, indent=4)
+
+    except Exception as e:
+        print("Ошибка при записи файла:", e)
+
 
 def show_greeting(parent_frame, callback=None):
     """Показывает приветствие Welcome с fade-in и fade-out, затем вызывает callback."""
-
+    set_allowed_anim(False)
     greeting_frame = ctk.CTkFrame(parent_frame, fg_color="black")
     greeting_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
 
@@ -30,6 +51,7 @@ def show_greeting(parent_frame, callback=None):
 
     def finish():
         greeting_frame.destroy()
+        set_allowed_anim(True)
         if callback:
             callback()
 

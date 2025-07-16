@@ -67,6 +67,8 @@ gif_durations = []
 gif_animation_running = False
 gif_visible = False
 current_edition = None
+alowed_animation = None
+is_always_anim = None
 
 image_button_current = None
 image_button_next = None
@@ -647,58 +649,93 @@ def get_current_edition():
         print(f"[ERROR] {e}. Returning default edition 'Normal edition'.")
         return "Evil eye"  # Возвращаем дефолтное значение
 
+def get_allowed_anim():
+    global alowed_animation, is_always_anim
+    try:
+        with open("settings.json", "r") as f:
+            setting = json.load(f)
+            alowed_animation = setting.get("allowed_anim", True)
+            is_always_anim = setting.get("always_show_anim", False)
+    except Exception:
+        alowed_animation = True  # если файл отсутствует или ошибка
+        is_always_anim =  False
+
+def set_allowed_anim(value: bool):
+    try:
+        settings = {}
+
+        # Если файл существует, загрузить его содержимое
+        if os.path.exists("settings.json"):
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+
+        # Обновляем или добавляем ключ
+        settings["allowed_anim"] = value
+
+        # Записываем обратно обновлённый словарь
+        with open("settings.json", "w") as f:
+            json.dump(settings, f, indent=4)
+
+    except Exception as e:
+        print("Ошибка при записи файла:", e)
+
+
 def show_gif_animation():
-    global gif_label, gif_frames, gif_durations, gif_animation_running, gif_visible, current_edition
+    global gif_label, gif_frames, gif_durations, gif_animation_running, gif_visible, current_edition, alowed_animation, is_always_anim
+
+    get_allowed_anim()  # обновим значение из файла
 
     edition = get_current_edition()  # Получаем актуальное значение редакции
 
-    # Проверяем, если редакция изменилась
+    # Проверка на смену редакции
     if edition != current_edition:
-        current_edition = edition  # Обновляем текущую редакцию
-        gif_frames = []  # Очищаем старые кадры
-        gif_durations = []  # Очищаем длительности кадров
-        gif_animation_running = False  # Останавливаем анимацию
+        current_edition = edition
+        gif_frames = []
+        gif_durations = []
+        gif_animation_running = False
 
+    # Определение нужного GIF
     try:
-        # Проверяем наличие файла GIF в зависимости от редакции
-        if edition == "Evil eye" and os.path.exists("images/gif_animation/EvilEye.gif"):
-            gif = Image.open("images/gif_animation/EvilEye.gif")
-        elif edition == "P Diddy" and os.path.exists("images/gif_animation/P_ddidy.gif"):
-            gif = Image.open("images/gif_animation/P_ddidy.gif")
-        elif edition == "Smile ascii" and os.path.exists("images/gif_animation/ascii_smile.gif"):
-            gif = Image.open("images/gif_animation/ascii_smile.gif")
-        elif edition == "Matrix" and os.path.exists("images/gif_animation/hacker_matrix.gif"):
-            gif = Image.open("images/gif_animation/hacker_matrix.gif")
-        elif edition == "Boom" and os.path.exists("images/gif_animation/ascii_boom_correct_order.gif"):
-            gif = Image.open("images/gif_animation/ascii_boom_correct_order.gif")
-        elif edition == "Car" and os.path.exists("images/gif_animation/car.gif"):
-            gif = Image.open("images/gif_animation/car.gif")
-        elif edition == "Space warp" and os.path.exists("images/gif_animation/space_warp_loop.gif"):
-            gif = Image.open("images/gif_animation/space_warp_loop.gif")
-        elif edition == "Earth" and os.path.exists("images/gif_animation/earth.gif"):
-            gif = Image.open("images/gif_animation/earth.gif")
-        else:
+        gif_path = None
+        if edition == "Evil eye":
+            gif_path = "images/gif_animation/EvilEye.gif"
+        elif edition == "P Diddy":
+            gif_path = "images/gif_animation/P_ddidy.gif"
+        elif edition == "Smile ascii":
+            gif_path = "images/gif_animation/ascii_smile.gif"
+        elif edition == "Matrix":
+            gif_path = "images/gif_animation/hacker_matrix.gif"
+        elif edition == "Boom":
+            gif_path = "images/gif_animation/ascii_boom_correct_order.gif"
+        elif edition == "Car":
+            gif_path = "images/gif_animation/car.gif"
+        elif edition == "Space warp":
+            gif_path = "images/gif_animation/space_warp_loop.gif"
+        elif edition == "Earth":
+            gif_path = "images/gif_animation/earth.gif"
+
+        if not gif_path or not os.path.exists(gif_path):
             raise FileNotFoundError("GIF file not found for selected edition.")
+
+        gif = Image.open(gif_path)
+
     except (FileNotFoundError, Exception) as e:
         print(f"[ERROR] {e}")
-        return  # Возвращаемся, если файл не найден или ошибка с загрузкой
+        return
 
-    if not alowed_gif_animation:
+    if not alowed_animation and not is_always_anim:
         return
 
     if gif_visible:
-        return  # Если анимация уже отображается, ничего не делаем
+        return  # если уже видна — не запускаем повторно
 
-    gif_visible = True  # начинаем показывать
+    gif_visible = True
 
     if gif_label is None:
         gif_label = ctk.CTkLabel(app, text="", fg_color="transparent")
-        gif_label.place(relx=0.5, rely=0.5, anchor="center", relwidth=1, relheight=1)
-    else:
-        gif_label.place(relx=0.5, rely=0.5, anchor="center", relwidth=1, relheight=1)
+    gif_label.place(relx=0.5, rely=0.5, anchor="center", relwidth=1, relheight=1)
 
     if not gif_frames:
-        # Загружаем кадры GIF
         for frame in ImageSequence.Iterator(gif):
             resized = frame.resize((app.winfo_width(), app.winfo_height()), Image.Resampling.LANCZOS)
             gif_frames.append(ImageTk.PhotoImage(resized))
@@ -709,9 +746,9 @@ def show_gif_animation():
 
         def update_gif(index=0):
             if not gif_visible:
-                return  # Если гиф скрыта, останавливаем цикл
+                return
             gif_label.configure(image=gif_frames[index])
-            gif_label.image = gif_frames[index]  # Сохраняем ссылку на изображение
+            gif_label.image = gif_frames[index]
             next_index = (index + 1) % len(gif_frames)
             app.after(gif_durations[index], update_gif, next_index)
 
@@ -817,6 +854,7 @@ def ddos_action():
     def go_back():
         global alowed_swipe
         alowed_swipe = True  # ВКЛЮЧАЕМ свайп при возврате
+        set_allowed_anim(True)
         init_main_ui(content_frame)
 
     create_ddos_ui(content_frame, go_back_callback=go_back)

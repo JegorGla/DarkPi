@@ -16,6 +16,7 @@ selected_edition = None  # Глобальная переменная для хр
 fullscreen = None
 selected_check_update = None
 use_proxy = None
+always_show = None
 
 def create_default_settings():
     """Создание файла с настройками по умолчанию."""
@@ -24,7 +25,8 @@ def create_default_settings():
         "edition": "Evil eye",
         "fullscreen": "Yes",
         "Time to check update": "1 day",
-        "use_proxy": "Yes"
+        "use_proxy": "Yes",
+        "always_show_anim": True
     }
     try:
         with open("settings.json", "w") as f:
@@ -35,7 +37,7 @@ def create_default_settings():
 
 
 def load_timeout_setting():
-    global selected_timeout, selected_edition, fullscreen, selected_check_update, use_proxy
+    global selected_timeout, selected_edition, fullscreen, selected_check_update, use_proxy, always_show
     if os.path.exists("settings.json"):
         try:
             with open("settings.json", "r") as f:
@@ -45,14 +47,16 @@ def load_timeout_setting():
                 fullscreen = data.get("fullscreen", "No")
                 selected_check_update = data.get("update_check_interval", "1 day")
                 use_proxy = data.get("use_proxy", "Yes")
-                print(f"[INFO] Loaded settings: timeout={selected_timeout}, edition={selected_edition}, fullscreen={fullscreen}")
+                always_show = data.get("always_show_anim", True)
+                #print(f"[INFO] Loaded settings: timeout={selected_timeout}, edition={selected_edition}, fullscreen={fullscreen}")
         except (json.JSONDecodeError, KeyError):
             selected_timeout = None
             selected_edition = None
             fullscreen = "No"
             selected_check_update = "Never"
             use_proxy = "Yes"
-            print("[WARNING] Failed to parse settings.json, setting values to defaults")
+            always_show = True
+            #print("[WARNING] Failed to parse settings.json, setting values to defaults")
     else:
         print("[WARNING] settings.json not found, creating default settings...")
         create_default_settings()
@@ -61,9 +65,10 @@ def load_timeout_setting():
         fullscreen = "No"
         selected_check_update = "1 day"
         use_proxy = "Yes"
+        always_show = True
 
 def save_timeout_setting():
-    global selected_timeout, selected_edition, fullscreen_var, selected_check_update, use_proxy
+    global selected_timeout, selected_edition, fullscreen_var, selected_check_update, use_proxy, always_show
     if selected_timeout and selected_edition:
         try:
             settings = {}
@@ -79,6 +84,7 @@ def save_timeout_setting():
             settings["fullscreen"] = "Yes" if fullscreen_var.get() else "No"
             settings["update_check_interval"] = selected_check_update
             settings["use_proxy"] = "Yes" if use_proxies_var.get() else "No"
+            settings["always_show_anim"] = True if use_always_show.get() else False
 
 
             with open("settings.json", "w") as f:
@@ -119,7 +125,14 @@ def get_use_proxy_value():
             return data.get("use_proxy", "Yes") == "Yes"
     except:
         return False  # по умолчанию выключено
-
+    
+def get_always_show_value():
+    try:
+        with open("settings.json", "r") as f:
+            data = json.load(f)
+            return data.get("always_show_anim", True) == True
+    except:
+        return False  # по умолчанию выключено
 
 def init_settings_ui(parent_frame, go_back_callback):
     """Функция для инициализации UI настроек."""
@@ -150,12 +163,13 @@ def init_settings_ui(parent_frame, go_back_callback):
     main_frame.pack(fill="both", expand=True, pady=(60, 20), padx=20)
 
     def go_back():
-        global selected_timeout, selected_edition, selected_check_update, selected_fullscreen, use_proxy
+        global selected_timeout, selected_edition, selected_check_update, selected_fullscreen, use_proxy, always_show
         selected_timeout = timeout_combo.get()
         selected_edition = edition_combo.get()
         selected_check_update = update_checker_combo.get()
         selected_fullscreen = fullscreen_var.get()
         use_proxy = use_proxies_var.get()
+        always_show = use_always_show.get()
         save_timeout_setting()
         go_back_callback()
 
@@ -163,16 +177,27 @@ def init_settings_ui(parent_frame, go_back_callback):
     back_btn.pack(anchor="nw", pady=10, padx=10)
 
     # Use proxies блок
-    setting_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-    setting_frame.pack(fill="x", pady=10, padx=10)
+    proxy_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    proxy_frame.pack(fill="x", pady=10, padx=10)
 
-    setting_label = ctk.CTkLabel(setting_frame, text="Use proxies", anchor="w", font=("Arial", 16))
+    setting_label = ctk.CTkLabel(proxy_frame, text="Use proxies", anchor="w", font=("Arial", 16))
     setting_label.pack(side="left", fill="x", expand=True, padx=(10, 0))
 
     global use_proxies_var
     use_proxies_var = ctk.BooleanVar(value=get_use_proxy_value())
-    checkbox = ctk.CTkCheckBox(setting_frame, variable=use_proxies_var, text="", command=save_timeout_setting)
+    checkbox = ctk.CTkCheckBox(proxy_frame, variable=use_proxies_var, text="", command=save_timeout_setting)
     checkbox.pack(side="right")
+
+    always_show_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    always_show_frame.pack(fill="x", pady=10, padx=10)
+
+    use_always_label = ctk.CTkLabel(always_show_frame, text="Use always anim", anchor="w", font=("Arial", 16))
+    use_always_label.pack(side="left", fill="x", expand=True, padx=(10, 0))
+
+    global use_always_show
+    use_always_show = ctk.BooleanVar(value=get_always_show_value())
+    use_always_show_checkbox = ctk.CTkCheckBox(always_show_frame, variable=use_always_show, text="", command=save_timeout_setting)
+    use_always_show_checkbox.pack(side="right")
 
     # Fullscreen блок
     fullscreen_frame = ctk.CTkFrame(main_frame, fg_color="transparent")

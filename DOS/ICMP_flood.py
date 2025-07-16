@@ -3,6 +3,8 @@ import threading
 import customtkinter as ctk
 import time
 from virtual_keyboard import NumericKeyboard
+import json
+import os
 
 stop_flag = False
 sent_count = 0
@@ -13,6 +15,27 @@ lock = threading.Lock()
 def clear_frame(frame):
     for widget in frame.winfo_children():
         widget.destroy()
+
+def set_allowed_anim(value: bool):
+    try:
+        settings = {}
+
+        # Если файл существует, загрузить его содержимое
+        if os.path.exists("settings.json"):
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+
+        # Обновляем или добавляем ключ
+        settings["allowed_anim"] = value
+
+        # Записываем обратно обновлённый словарь
+        with open("settings.json", "w") as f:
+            json.dump(settings, f, indent=4)
+
+    except Exception as e:
+        print("Ошибка при записи файла:", e)
+
+            
 
 def create_icmp_flood_ui(parent_frame, go_back_callback=None):
     clear_frame(parent_frame)
@@ -36,7 +59,6 @@ def create_icmp_flood_ui(parent_frame, go_back_callback=None):
         target_ip = ip_entry.get() or target_ip
         thread_count = int(thread_entry.get() or 200)
 
-        
         max_packets_entry = count_entry.get()
         max_packets = int(max_packets_entry) if max_packets_entry.isdigit() else None
 
@@ -46,6 +68,7 @@ def create_icmp_flood_ui(parent_frame, go_back_callback=None):
         start_time = time.time()
 
         clear_frame(parent_frame)
+        set_allowed_anim(False)
 
         info_frame = ctk.CTkFrame(parent_frame, width=400, height=400, corner_radius=10)
         info_frame.place(relx=0.5, rely=0.5, anchor="center")
@@ -82,6 +105,11 @@ def create_icmp_flood_ui(parent_frame, go_back_callback=None):
             height=40
         )
         back_button.pack(pady=10)
+
+        if not is_host_alive(target_ip):
+            set_allowed_anim(True)
+            ctk.CTkLabel(parent_frame, text=f"Target {target_ip} is unavaible", text_color="red", font=("Arial", 16)).pack(pady=10)
+            return
     
         def update_ui():
             if not stop_flag:
@@ -109,6 +137,16 @@ def create_icmp_flood_ui(parent_frame, go_back_callback=None):
 def stop_icmp_flood():
     global stop_flag
     stop_flag = True
+
+def is_host_alive(ip_address, timeout=1):
+    try:
+        packet = IP(dst=ip_address) / ICMP()
+        response = sr1(packet, timeout=timeout, verbose=0)
+        print(response)
+        return response is not None
+    except Exception as e:
+        print(f"[ERROR] Ошибка при пинге {ip_address}: {e}")
+        return False
 
 def icmp_flood():
     global sent_count, received_count

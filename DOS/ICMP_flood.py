@@ -93,8 +93,13 @@ def create_icmp_flood_ui(parent_frame, go_back_callback=None):
         value_time = ctk.CTkLabel(info_frame, text="0s", font=("Arial", 16))
         value_time.grid(row=3, column=1, padx=10, pady=5, sticky="e")
 
+        label_status = ctk.CTkLabel(info_frame, text="Статус:", font=("Arial", 16))
+        label_status.grid(row=4, column=0, padx=10, pady=5, sticky="w")
+        value_status = ctk.CTkLabel(info_frame, text="Проверка...", font=("Arial", 16))
+        value_status.grid(row=4, column=1, padx=10, pady=5, sticky="e")
+
         stop_btn = ctk.CTkButton(info_frame, text="Stop Flood", command=stop_icmp_flood)
-        stop_btn.grid(row=4, column=0, columnspan=2, pady=20)
+        stop_btn.grid(row=5, column=0, columnspan=2, pady=20)
 
         back_button = ctk.CTkButton(
             parent_frame,
@@ -119,7 +124,19 @@ def create_icmp_flood_ui(parent_frame, go_back_callback=None):
                     value_received.configure(text=str(received_count))
                     value_lost.configure(text=str(sent_count - received_count))
                     value_time.configure(text=f"{elapsed}s")
+
+                # Проверка доступности устройства (раз в 2 секунды)
+                if elapsed % 2 == 0:
+                    def check_status():
+                        alive = is_host_alive(target_ip)
+                        value_status.configure(
+                            text="Доступно" if alive else "Недоступно",
+                            text_color="green" if alive else "red"
+                        )
+                    threading.Thread(target=check_status, daemon=True).start()
+
                 parent_frame.after(1000, update_ui)
+
 
         update_ui()
 
